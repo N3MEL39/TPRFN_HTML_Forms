@@ -1,0 +1,330 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Winlink Simple Bulletin (Packet Radio)</title>
+  <style>
+    * { box-sizing: border-box; }
+    body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, monospace; background: #fdfaf6; color: #222; padding: 20px; margin: 0; }
+    .container { max-width: 900px; margin: 0 auto; background: #fff; padding: 24px; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+    .header { background: #d84315; color: white; padding: 12px; border-radius: 6px; text-align: center; margin-bottom: 18px; }
+    .header h2 { margin: 0; font-size: 1.3rem; letter-spacing: 1px; }
+    .header p { margin: 4px 0 0 0; font-size: 0.85rem; opacity: 0.9; }
+    fieldset { border: 1px solid #ffccbc; border-radius: 6px; padding: 14px; margin-bottom: 14px; background: #fffbf9; }
+    legend { font-weight: bold; padding: 0 8px; font-size: 0.85rem; color: #bf360c; }
+    .row { display: flex; flex-wrap: wrap; gap: 12px; margin-bottom: 10px; }
+    .col { flex: 1; min-width: 140px; display: flex; flex-direction: column; }
+    .label-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px; }
+    label { font-size: 0.8rem; font-weight: 600; color: #333; }
+    input[type="text"], textarea, select { padding: 7px 8px; font-size: 0.9rem; border: 1px solid #999; border-radius: 4px; font-family: inherit; width: 100%; }
+    textarea { resize: vertical; min-height: 120px; }
+    .btn-now { background: #4a5568; color: #fff; padding: 4px 8px; font-size: 0.72rem; border-radius: 4px; border: none; cursor: pointer; }
+    .btn-now:hover { background: #2d3748; }
+    .actions { display: flex; gap: 10px; margin: 18px 0; }
+    button.main-btn { flex: 1; padding: 12px; font-size: 0.95rem; font-weight: bold; border: none; border-radius: 6px; cursor: pointer; }
+    .btn-generate { background: #d84315; color: #fff; }
+    .btn-generate:hover { background: #bf360c; }
+    .btn-save { background: #5c6bc0; color: #fff; }
+    .btn-save:hover { background: #3f51b5; }
+    .btn-copy { background: #2e7d32; color: #fff; }
+    .btn-copy:hover { background: #1b5e20; }
+    .btn-clear { background: #c62828; color: #fff; flex: 0.35; }
+    .btn-clear:hover { background: #8e0000; }
+    pre { background: #181c20; color: #39ff14; padding: 14px; border-radius: 6px; overflow-x: auto; font-family: "Courier New", Courier, monospace; font-size: 0.85rem; line-height: 1.35; min-height: 150px; }
+    .nav-bar { margin-bottom: 12px; font-size: 0.85rem; }
+    .nav-bar a { color: #d84315; text-decoration: none; font-weight: bold; }
+  
+    /* Modal Save Dialog Window */
+    .save-modal-backdrop {
+      display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+      background: rgba(0,0,0,0.55); z-index: 99999; justify-content: center; align-items: center;
+    }
+    .save-modal-backdrop.active { display: flex; }
+    .save-modal-window {
+      background: #ffffff; padding: 24px 28px; border-radius: 10px; width: 92%; max-width: 480px;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.3); border: 1px solid #cbd5e1; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    }
+    .save-modal-window h3 { margin: 0 0 8px 0; font-size: 1.25rem; color: #1e293b; font-weight: bold; }
+    .save-modal-window p { margin: 0 0 16px 0; font-size: 0.88rem; color: #64748b; line-height: 1.4; }
+    .save-modal-window input[type="text"] {
+      width: 100%; padding: 10px 12px; font-size: 0.95rem; border: 2px solid #94a3b8; border-radius: 6px;
+      margin-bottom: 20px; font-family: inherit; box-sizing: border-box; text-transform: none;
+    }
+    .save-modal-window input[type="text"]:focus { border-color: #2563eb; outline: none; }
+    .save-modal-actions { display: flex; gap: 10px; justify-content: flex-end; }
+    .save-modal-btn { padding: 9px 18px; font-size: 0.9rem; font-weight: bold; border-radius: 6px; border: none; cursor: pointer; }
+    .save-modal-btn-confirm { background: #2563eb; color: #ffffff; }
+    .save-modal-btn-confirm:hover { background: #1d4ed8; }
+    .save-modal-btn-cancel { background: #e2e8f0; color: #334155; }
+    .save-modal-btn-cancel:hover { background: #cbd5e1; }
+
+  </style>
+</head>
+<body>
+<div class="container">
+  <div class="nav-bar"><a href="../index.html">&larr; Back to Packet Forms Hub</a></div>
+  <div class="header">
+    <h2>BULLETIN (WINLINK / PACKET RADIO)</h2>
+    <p>Official Winlink Simple Bulletin Template</p>
+  </div>
+
+  <form id="bulletinForm" onsubmit="event.preventDefault(); return false;">
+    <fieldset>
+      <legend>BULLETIN HEADER & ROUTING</legend>
+      <div class="row">
+        <div class="col" style="flex: 2;"><label for="forGroup">For (Name / Group)</label><input type="text" id="forGroup" placeholder="Name or Group this bulletin is for (e.g. ALL ARES STATIONS)"></div>
+        <div class="col"><label for="bullNr">Bulletin Nr.</label><input type="text" id="bullNr" placeholder="Optional number / identifier"></div>
+      </div>
+      <div class="row">
+        <div class="col" style="flex: 2;"><label for="fromGroup">From (Name / Group)</label><input type="text" id="fromGroup" placeholder="Your name or agency / group"></div>
+        <div class="col">
+          <div class="label-row">
+            <label for="dtZulu">Date / Time</label>
+            <button type="button" class="btn-now" id="btnBltnNow">Current UTC</button>
+          </div>
+          <input type="text" id="dtZulu" placeholder="YYYY-MM-DD HHMMZ">
+        </div>
+      </div>
+      <div class="row">
+        <div class="col" style="max-width: 170px;">
+          <label for="precedence">Precedence</label>
+          <select id="precedence">
+            <option value="Routine" selected>Routine</option>
+            <option value="Priority">Priority</option>
+            <option value="Immediate">Immediate</option>
+            <option value="Flash">Flash</option>
+          </select>
+        </div>
+        <div class="col"><label for="subject">Subject</label><input type="text" id="subject" placeholder="Bulletin subject line"></div>
+      </div>
+    </fieldset>
+
+    <fieldset>
+      <legend>BULLETIN MESSAGE BODY</legend>
+      <textarea id="message" rows="8" placeholder="Insert your bulletin text..."></textarea>
+    </fieldset>
+
+    <div class="actions">
+      <button type="button" class="main-btn btn-generate" id="btnGen">Generate Packet ASCII</button>
+      <button type="button" class="main-btn btn-save" id="btnSaveHtml">Save as HTML</button>
+      <button type="button" class="main-btn btn-copy" id="btnCopy">Copy ASCII</button>
+      <button type="button" class="main-btn btn-clear" id="btnClear">Reset</button>
+    </div>
+  </form>
+
+  <label style="font-weight:bold;">Formatted ASCII Output (Ready for Packet / BBS):</label>
+  <pre id="outputPre">Fill in the fields above and click "Generate Packet ASCII"...</pre>
+</div>
+
+<script>
+  function setUTC() {
+    const now = new Date();
+    const y = now.getUTCFullYear();
+    const m = String(now.getUTCMonth()+1).padStart(2,'0');
+    const d = String(now.getUTCDate()).padStart(2,'0');
+    const hh = String(now.getUTCHours()).padStart(2,'0');
+    const mm = String(now.getUTCMinutes()).padStart(2,'0');
+    document.getElementById('dtZulu').value = y + '-' + m + '-' + d + ' ' + hh + mm + 'Z';
+  }
+
+  function clean(id) {
+    const el = document.getElementById(id);
+    return el ? (el.value || '').trim() : '';
+  }
+
+  function wrapText(str, width) {
+    if (!str) return [];
+    let lines = [];
+    str.split('\n').forEach(function(paragraph) {
+      let words = paragraph.split(' ');
+      let cur = '';
+      words.forEach(function(w) {
+        if ((cur + (cur ? ' ' : '') + w).length <= width) {
+          cur += (cur ? ' ' : '') + w;
+        } else {
+          if (cur) lines.push(cur);
+          cur = w;
+        }
+      });
+      if (cur) lines.push(cur);
+    });
+    return lines;
+  }
+
+  function pad(str, len) {
+    str = (str || '').toString();
+    return str + ' '.repeat(Math.max(0, len - str.length));
+  }
+
+  function generateASCII() {
+    try {
+      const div = '='.repeat(74);
+      const sub = '-'.repeat(74);
+
+      const target = clean('forGroup') || 'ALL';
+      const nr = clean('bullNr') || 'N/A';
+      const from = clean('fromGroup') || 'N/A';
+      const dt = clean('dtZulu') || 'N/A';
+      const prec = clean('precedence');
+      const subj = clean('subject') || 'GENERAL BULLETIN';
+      const body = clean('message') || 'NO BULLETIN TEXT ENTERED';
+
+      let wrappedBody = wrapText(body, 70).map(function(l){ return '  ' + l; }).join('\n');
+
+      const out = div + '\n' +
+        'WINLINK / PACKET RADIO BULLETIN\n' +
+        div + '\n' +
+        'FOR (TARGET) : ' + target + '          BULLETIN #: ' + nr + '\n' +
+        'FROM        : ' + from + '          PRECEDENCE: ' + prec + '\n' +
+        'DATE/TIME   : ' + dt + '\n' +
+        'SUBJECT     : ' + subj + '\n' +
+        sub + '\n' +
+        'BULLETIN TEXT:\n' +
+        wrappedBody + '\n' +
+        div;
+
+      document.getElementById('outputPre').textContent = out;
+    } catch(err) {
+      alert("Error generating text: " + err.message);
+    }
+  }
+
+  function copyASCII() {
+    const txt = document.getElementById('outputPre').textContent;
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(txt).then(function() {
+        alert("Bulletin copied to clipboard!");
+      }).catch(function() {
+        fallbackCopy();
+      });
+    } else {
+      fallbackCopy();
+    }
+  }
+
+  function fallbackCopy() {
+    const pre = document.getElementById('outputPre');
+    const range = document.createRange();
+    range.selectNode(pre);
+    window.getSelection().removeAllRanges();
+    window.getSelection().addRange(range);
+    document.execCommand('copy');
+    alert("Copied to clipboard!");
+  }
+
+  function clearForm() {
+    if(confirm("Reset Bulletin form?")) {
+      document.getElementById('bulletinForm').reset();
+      document.getElementById('outputPre').textContent = 'Fill in the fields above and click "Generate Packet ASCII"...';
+    }
+  }
+
+  document.getElementById('btnBltnNow').addEventListener('click', setUTC);
+  document.getElementById('btnGen').addEventListener('click', generateASCII);
+  document.getElementById('btnSaveHtml').addEventListener('click', openSaveModal);
+  document.getElementById('btnCopy').addEventListener('click', copyASCII);
+  document.getElementById('btnClear').addEventListener('click', clearForm);
+
+  // File Name Modal Window & HTML Exporter
+  function openSaveModal() {
+    var now = new Date();
+    var dStr = now.toISOString().slice(0, 10);
+    var defName = 'general_bulletin_' + dStr + '.html';
+    var modal = document.getElementById('saveModalBackdrop');
+    var input = document.getElementById('saveModalFileName');
+    if (input) input.value = defName;
+    if (modal) modal.classList.add('active');
+    setTimeout(function() {
+      if (input) { input.focus(); input.select(); }
+    }, 50);
+  }
+
+  function closeSaveModal() {
+    var modal = document.getElementById('saveModalBackdrop');
+    if (modal) modal.classList.remove('active');
+  }
+
+  function executeSaveHTML() {
+    var input = document.getElementById('saveModalFileName');
+    var chosenName = input ? input.value.trim() : '';
+    if (!chosenName) return;
+    if (!chosenName.toLowerCase().endsWith('.html') && !chosenName.toLowerCase().endsWith('.htm')) {
+      chosenName += '.html';
+    }
+    closeSaveModal();
+
+    document.querySelectorAll('input[type="text"]').forEach(function(el) { el.setAttribute('value', el.value); });
+    document.querySelectorAll('input[type="checkbox"], input[type="radio"]').forEach(function(el) {
+      if (el.checked) el.setAttribute('checked', 'checked');
+      else el.removeAttribute('checked');
+    });
+    document.querySelectorAll('textarea').forEach(function(el) { el.textContent = el.value; });
+    document.querySelectorAll('select').forEach(function(el) {
+      Array.from(el.options).forEach(function(opt) {
+        if (opt.value === el.value) opt.setAttribute('selected', 'selected');
+        else opt.removeAttribute('selected');
+      });
+    });
+    
+    var pre = document.getElementById('ascii-report') || document.getElementById('outputPre') || document.getElementById('preview') || document.getElementById('outputArea');
+    if (pre) pre.textContent = pre.textContent;
+
+    var clonedDoc = document.documentElement.cloneNode(true);
+    var modalInClone = clonedDoc.querySelector('#saveModalBackdrop');
+    if (modalInClone) modalInClone.classList.remove('active');
+
+    var htmlContent = '<!DOCTYPE html>\n' + clonedDoc.outerHTML;
+    var blob = new Blob([htmlContent], { type: 'text/html;charset=utf-8' });
+    var url = URL.createObjectURL(blob);
+    var a = document.createElement('a');
+    a.href = url;
+    a.download = chosenName;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  }
+
+  window.addEventListener('DOMContentLoaded', function() {
+    var cancelBtn = document.getElementById('saveModalCancelBtn');
+    var confirmBtn = document.getElementById('saveModalSaveBtn');
+    var modalInput = document.getElementById('saveModalFileName');
+    var modalBackdrop = document.getElementById('saveModalBackdrop');
+
+    if (cancelBtn) cancelBtn.addEventListener('click', closeSaveModal);
+    if (confirmBtn) confirmBtn.addEventListener('click', executeSaveHTML);
+    if (modalInput) {
+      modalInput.addEventListener('keydown', function(e) {
+        if (e.key === 'Enter') { e.preventDefault(); executeSaveHTML(); }
+        if (e.key === 'Escape') { e.preventDefault(); closeSaveModal(); }
+      });
+    }
+    if (modalBackdrop) {
+      modalBackdrop.addEventListener('click', function(e) {
+        if (e.target === modalBackdrop) closeSaveModal();
+      });
+    }
+
+    var btnSaveMain = document.getElementById('btnSaveHtml');
+    if (btnSaveMain) {
+      btnSaveMain.onclick = null;
+      btnSaveMain.addEventListener('click', openSaveModal);
+    }
+  });
+</script>
+
+  <!-- Custom File Name Modal Window -->
+  <div id="saveModalBackdrop" class="save-modal-backdrop">
+    <div class="save-modal-window">
+      <h3>Save Form as HTML</h3>
+      <p>Enter a name for the saved offline HTML file:</p>
+      <input type="text" id="saveModalFileName" spellcheck="false">
+      <div class="save-modal-actions">
+        <button type="button" class="save-modal-btn save-modal-btn-cancel" id="saveModalCancelBtn">Cancel</button>
+        <button type="button" class="save-modal-btn save-modal-btn-confirm" id="saveModalSaveBtn">Save File</button>
+      </div>
+    </div>
+  </div>
+
+</body>
+</html>

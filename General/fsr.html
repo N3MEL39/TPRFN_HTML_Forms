@@ -1,0 +1,553 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Winlink Field Situation Report (FSR) - Full Version</title>
+  <style>
+    * { box-sizing: border-box; }
+    body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, monospace; background: #eef1f5; color: #222; padding: 20px; margin: 0; }
+    .container { max-width: 960px; margin: 0 auto; background: #fff; padding: 24px; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+    .header { background: #b71c1c; color: white; padding: 12px; border-radius: 6px; text-align: center; margin-bottom: 18px; }
+    .header h2 { margin: 0; font-size: 1.3rem; letter-spacing: 1px; }
+    .header p { margin: 4px 0 0 0; font-size: 0.85rem; opacity: 0.9; }
+    fieldset { border: 1px solid #ef9a9a; border-radius: 6px; padding: 14px; margin-bottom: 14px; background: #fffbfb; }
+    legend { font-weight: bold; padding: 0 8px; font-size: 0.85rem; color: #b71c1c; }
+    .row { display: flex; flex-wrap: wrap; gap: 12px; margin-bottom: 10px; }
+    .col { flex: 1; min-width: 140px; display: flex; flex-direction: column; }
+    .label-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px; }
+    label { font-size: 0.8rem; font-weight: 600; color: #333; }
+    input[type="text"], textarea, select { padding: 7px 8px; font-size: 0.88rem; border: 1px solid #999; border-radius: 4px; font-family: inherit; width: 100%; }
+    textarea { resize: vertical; min-height: 50px; }
+    .btn-now { background: #4a5568; color: #fff; padding: 4px 8px; font-size: 0.72rem; border-radius: 4px; border: none; cursor: pointer; }
+    .btn-now:hover { background: #2d3748; }
+    .lifeline-block { background: #fafafa; border: 1px solid #e0e0e0; border-radius: 5px; padding: 10px; margin-bottom: 8px; }
+    .lifeline-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; }
+    .lifeline-header span { font-size: 0.85rem; font-weight: bold; color: #333; }
+    .lifeline-header select { width: 170px; font-weight: bold; }
+    .actions { display: flex; gap: 10px; margin: 18px 0; }
+    button.main-btn { flex: 1; padding: 12px; font-size: 0.95rem; font-weight: bold; border: none; border-radius: 6px; cursor: pointer; }
+    .btn-generate { background: #b71c1c; color: #fff; }
+    .btn-generate:hover { background: #7f0000; }
+    .btn-save { background: #5c6bc0; color: #fff; }
+    .btn-save:hover { background: #3f51b5; }
+    .btn-copy { background: #2e7d32; color: #fff; }
+    .btn-copy:hover { background: #1b5e20; }
+    .btn-clear { background: #555; color: #fff; flex: 0.35; }
+    .btn-clear:hover { background: #333; }
+    pre { background: #181c20; color: #39ff14; padding: 14px; border-radius: 6px; overflow-x: auto; font-family: "Courier New", Courier, monospace; font-size: 0.82rem; line-height: 1.32; min-height: 150px; }
+    .nav-bar { margin-bottom: 12px; font-size: 0.85rem; }
+    .nav-bar a { color: #b71c1c; text-decoration: none; font-weight: bold; }
+  
+    /* Modal Save Dialog Window */
+    .save-modal-backdrop {
+      display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+      background: rgba(0,0,0,0.55); z-index: 99999; justify-content: center; align-items: center;
+    }
+    .save-modal-backdrop.active { display: flex; }
+    .save-modal-window {
+      background: #ffffff; padding: 24px 28px; border-radius: 10px; width: 92%; max-width: 480px;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.3); border: 1px solid #cbd5e1; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    }
+    .save-modal-window h3 { margin: 0 0 8px 0; font-size: 1.25rem; color: #1e293b; font-weight: bold; }
+    .save-modal-window p { margin: 0 0 16px 0; font-size: 0.88rem; color: #64748b; line-height: 1.4; }
+    .save-modal-window input[type="text"] {
+      width: 100%; padding: 10px 12px; font-size: 0.95rem; border: 2px solid #94a3b8; border-radius: 6px;
+      margin-bottom: 20px; font-family: inherit; box-sizing: border-box; text-transform: none;
+    }
+    .save-modal-window input[type="text"]:focus { border-color: #2563eb; outline: none; }
+    .save-modal-actions { display: flex; gap: 10px; justify-content: flex-end; }
+    .save-modal-btn { padding: 9px 18px; font-size: 0.9rem; font-weight: bold; border-radius: 6px; border: none; cursor: pointer; }
+    .save-modal-btn-confirm { background: #2563eb; color: #ffffff; }
+    .save-modal-btn-confirm:hover { background: #1d4ed8; }
+    .save-modal-btn-cancel { background: #e2e8f0; color: #334155; }
+    .save-modal-btn-cancel:hover { background: #cbd5e1; }
+  </style>
+</head>
+<body>
+<div class="container">
+  <div class="nav-bar"><a href="../index.html">&larr; Back to Packet Forms Hub</a></div>
+  <div class="header">
+    <h2>FIELD SITUATION REPORT (FSR)</h2>
+    <p>Official Winlink Emergency Infrastructure & Lifeline Assessment</p>
+  </div>
+
+  <form id="fsrForm" onsubmit="event.preventDefault(); return false;">
+    <fieldset>
+      <legend>ROUTING & MESSAGE HEADER</legend>
+      <div class="row">
+        <div class="col" style="max-width: 140px;">
+          <label for="prec">Precedence</label>
+          <select id="prec">
+            <option value="R/ Routine" selected>R/ Routine</option>
+            <option value="P/ Priority">P/ Priority</option>
+            <option value="O/ Immediate">O/ Immediate</option>
+            <option value="Z/ Flash">Z/ Flash</option>
+          </select>
+        </div>
+        <div class="col">
+          <div class="label-row">
+            <label for="dtZulu">Date / Time (UTC)</label>
+            <button type="button" class="btn-now" id="btnZuluNow">Current UTC</button>
+          </div>
+          <input type="text" id="dtZulu" placeholder="YYYY-MM-DD HHMMZ">
+        </div>
+        <div class="col" style="max-width: 140px;"><label for="taskNum">Task / Msg #</label><input type="text" id="taskNum" placeholder="e.g. 001"></div>
+        <div class="col"><label for="msgSender">From (Callsign)</label><input type="text" id="msgSender" placeholder="N0CALL"></div>
+      </div>
+      <div class="row">
+        <div class="col"><label for="msgTo">To (Callsigns or Emails separated by semicolon ;)</label><input type="text" id="msgTo" placeholder="NCS; REDCROSS; EOC@COUNTY.GOV"></div>
+        <div class="col"><label for="msgCc">Info (CC)</label><input type="text" id="msgCc" placeholder="Optional CC recipients"></div>
+      </div>
+    </fieldset>
+
+    <fieldset id="safetyFieldset">
+      <legend>1. LIFE SAFETY / CRITICAL STATUS</legend>
+      <div class="row" style="align-items: center;">
+        <div class="col" style="max-width: 320px;">
+          <label for="lifeSafety" style="color: #b71c1c;">Is there an EMERGENT / LIFE SAFETY Need?</label>
+          <select id="lifeSafety" style="font-weight:bold;">
+            <option value="NO" selected>NO - Standard Situation</option>
+            <option value="YES" style="background:#ffcdd2; color:#b71c1c;">YES - LIFE CRITICAL NEED</option>
+          </select>
+        </div>
+        <div class="col">
+          <label for="lifeSafetyDesc">Emergency Details & Residential Address (if Life Critical)</label>
+          <input type="text" id="lifeSafetyDesc" placeholder="Describe life-safety hazard, trapped persons, residential address...">
+        </div>
+      </div>
+    </fieldset>
+
+    <fieldset>
+      <legend>2-3. LOCATION & GEOCOORDINATES</legend>
+      <div class="row">
+        <div class="col"><label for="city">City</label><input type="text" id="city"></div>
+        <div class="col"><label for="county">County</label><input type="text" id="county"></div>
+        <div class="col" style="max-width: 90px;"><label for="state">State</label><input type="text" id="state" placeholder="TX" maxlength="2"></div>
+        <div class="col"><label for="territory">Territory / Region</label><input type="text" id="territory"></div>
+      </div>
+      <div class="row">
+        <div class="col"><label for="lat">Latitude (Decimal)</label><input type="text" id="lat" placeholder="e.g. 30.2672"></div>
+        <div class="col"><label for="lon">Longitude (Decimal)</label><input type="text" id="lon" placeholder="e.g. -97.7431"></div>
+        <div class="col"><label for="mgrs">MGRS Coordinates</label><input type="text" id="mgrs" placeholder="e.g. 14RPU12345678"></div>
+        <div class="col" style="max-width: 120px;"><label for="grid">Grid Square</label><input type="text" id="grid" placeholder="EM10dj"></div>
+      </div>
+    </fieldset>
+
+    <fieldset>
+      <legend>4-11. INFRASTRUCTURE & LIFELINE ASSESSMENTS</legend>
+
+      <!-- 4a & 4b Phone -->
+      <div class="lifeline-block">
+        <div class="lifeline-header">
+          <span>4a. POTS Landlines Functioning?</span>
+          <select id="s_pots"><option value="YES">YES</option><option value="NO">NO</option><option value="Unknown - N/A" selected>Unknown - N/A</option></select>
+        </div>
+        <input type="text" id="c_pots" placeholder="If NO, state provider or area details...">
+      </div>
+
+      <div class="lifeline-block">
+        <div class="lifeline-header">
+          <span>4b. VoIP Landlines Functioning?</span>
+          <select id="s_voip"><option value="YES">YES</option><option value="NO">NO</option><option value="Unknown - N/A" selected>Unknown - N/A</option></select>
+        </div>
+        <input type="text" id="c_voip" placeholder="If NO, state provider or area details...">
+      </div>
+
+      <!-- 5a & 5b Cell -->
+      <div class="lifeline-block">
+        <div class="lifeline-header">
+          <span>5a. Cell Phone Voice Calls Functioning?</span>
+          <select id="s_cell_v"><option value="YES">YES</option><option value="NO">NO</option><option value="Unknown - N/A" selected>Unknown - N/A</option></select>
+        </div>
+        <input type="text" id="c_cell_v" placeholder="If NO, state carrier (AT&T, Verizon, T-Mobile)...">
+      </div>
+
+      <div class="lifeline-block">
+        <div class="lifeline-header">
+          <span>5b. Cell Phone Texts (SMS) Functioning?</span>
+          <select id="s_cell_t"><option value="YES">YES</option><option value="NO">NO</option><option value="Unknown - N/A" selected>Unknown - N/A</option></select>
+        </div>
+        <input type="text" id="c_cell_t" placeholder="If NO, state carrier or notes...">
+      </div>
+
+      <!-- 6 Broadcast Radio -->
+      <div class="lifeline-block">
+        <div class="lifeline-header">
+          <span>6. AM/FM Broadcast Stations Functioning?</span>
+          <select id="s_amfm"><option value="YES">YES</option><option value="NO">NO</option><option value="Unknown - N/A" selected>Unknown - N/A</option></select>
+        </div>
+        <input type="text" id="c_amfm" placeholder="If NO, provide broadcast station callsign / frequency off the air...">
+      </div>
+
+      <!-- 7 TV -->
+      <div class="lifeline-block">
+        <div class="lifeline-header">
+          <span>7a. Over-the-Air (OTA) TV Functioning?</span>
+          <select id="s_otatv"><option value="YES">YES</option><option value="NO">NO</option><option value="Unknown - N/A" selected>Unknown - N/A</option></select>
+        </div>
+        <input type="text" id="c_otatv" placeholder="If NO, identify TV station / transmitter...">
+      </div>
+
+      <div class="lifeline-block">
+        <div class="lifeline-header">
+          <span>7b. Satellite TV Functioning?</span>
+          <select id="s_sattv"><option value="YES">YES</option><option value="NO">NO</option><option value="Unknown - N/A" selected>Unknown - N/A</option></select>
+        </div>
+        <input type="text" id="c_sattv" placeholder="If NO, state provider...">
+      </div>
+
+      <div class="lifeline-block">
+        <div class="lifeline-header">
+          <span>7c. Cable TV Functioning?</span>
+          <select id="s_cabletv"><option value="YES">YES</option><option value="NO">NO</option><option value="Unknown - N/A" selected>Unknown - N/A</option></select>
+        </div>
+        <input type="text" id="c_cabletv" placeholder="If NO, state provider...">
+      </div>
+
+      <!-- 8 Water -->
+      <div class="lifeline-block">
+        <div class="lifeline-header">
+          <span>8. Public Water Works Functioning?</span>
+          <select id="s_water"><option value="YES">YES</option><option value="NO">NO</option><option value="Unknown - N/A" selected>Unknown - N/A</option></select>
+        </div>
+        <input type="text" id="c_water" placeholder="If NO, describe outage or boil-water notice...">
+      </div>
+
+      <!-- 9 Power & Gas -->
+      <div class="lifeline-block">
+        <div class="lifeline-header">
+          <span>9a. Commercial Power Functioning?</span>
+          <select id="s_pwr"><option value="YES">YES</option><option value="NO">NO</option><option value="Unknown - N/A" selected>Unknown - N/A</option></select>
+        </div>
+        <input type="text" id="c_pwr" placeholder="If NO, state electric utility provider...">
+      </div>
+
+      <div class="lifeline-block">
+        <div class="lifeline-header">
+          <span>9b. Commercial Power Stable?</span>
+          <select id="s_pwr_stab"><option value="YES">YES</option><option value="NO">NO (Brownouts / Fluctuating)</option><option value="Unknown - N/A" selected>Unknown - N/A</option></select>
+        </div>
+        <input type="text" id="c_pwr_stab" placeholder="Comments on power stability...">
+      </div>
+
+      <div class="lifeline-block">
+        <div class="lifeline-header">
+          <span>9c. Natural Gas Supply Functioning?</span>
+          <select id="s_gas"><option value="YES">YES</option><option value="NO">NO</option><option value="Unknown - N/A" selected>Unknown - N/A</option></select>
+        </div>
+        <input type="text" id="c_gas" placeholder="If NO, state gas provider...">
+      </div>
+
+      <!-- 10 Internet -->
+      <div class="lifeline-block">
+        <div class="lifeline-header">
+          <span>10. Internet Functioning?</span>
+          <select id="s_net"><option value="YES">YES</option><option value="NO">NO</option><option value="Unknown - N/A" selected>Unknown - N/A</option></select>
+        </div>
+        <input type="text" id="c_net" placeholder="Indicate Fiber, Cable, DSL, Wireless, Satellite and ISP...">
+      </div>
+
+      <!-- 11 NOAA Weather Radio -->
+      <div class="lifeline-block">
+        <div class="lifeline-header">
+          <span>11a. NOAA Weather Radio Functioning?</span>
+          <select id="s_noaa"><option value="YES">YES</option><option value="NO">NO</option><option value="Unknown - N/A" selected>Unknown - N/A</option></select>
+        </div>
+        <input type="text" id="c_noaa" placeholder="Identify NOAA Transmitter frequency, callsign, or location...">
+      </div>
+
+      <div class="lifeline-block">
+        <div class="lifeline-header">
+          <span>11b. NOAA Weather Radio Audio Degraded?</span>
+          <select id="s_noaa_deg"><option value="YES">YES (Degraded / Static)</option><option value="NO">NO (Clear Audio)</option><option value="Unknown - N/A" selected>Unknown - N/A</option></select>
+        </div>
+        <input type="text" id="c_noaa_deg" placeholder="Comments on audio degradation...">
+      </div>
+    </fieldset>
+
+    <fieldset>
+      <legend>12-13. SUMMARY & POINT OF CONTACT</legend>
+      <div class="row">
+        <div class="col">
+          <label for="comments">12. Additional Comments / Current Observations</label>
+          <textarea id="comments" rows="3" placeholder="Brief summary of situation, observed damage, local road access..."></textarea>
+        </div>
+      </div>
+      <div class="row">
+        <div class="col"><label for="poc">13. Point of Contact (POC)</label><input type="text" id="poc" placeholder="Name, Callsign, Phone / Email"></div>
+      </div>
+    </fieldset>
+
+    <div class="actions">
+      <button type="button" class="main-btn btn-generate" id="btnGen">Generate Packet ASCII</button>
+      <button type="button" class="main-btn btn-save" id="btnSaveHtml">Save as HTML</button>
+      <button type="button" class="main-btn btn-copy" id="btnCopy">Copy ASCII</button>
+      <button type="button" class="main-btn btn-clear" id="btnClear">Reset</button>
+    </div>
+  </form>
+
+  <label style="font-weight:bold;">Formatted ASCII for Packet / BBS Transmission:</label>
+  <pre id="outputPre">Fill in the fields above and click "Generate Packet ASCII"...</pre>
+</div>
+
+<script>
+  function setUTC() {
+    const now = new Date();
+    const y = now.getUTCFullYear();
+    const m = String(now.getUTCMonth()+1).padStart(2,'0');
+    const d = String(now.getUTCDate()).padStart(2,'0');
+    const hh = String(now.getUTCHours()).padStart(2,'0');
+    const mm = String(now.getUTCMinutes()).padStart(2,'0');
+    document.getElementById('dtZulu').value = y + '-' + m + '-' + d + ' ' + hh + mm + 'Z';
+  }
+
+  function clean(id) {
+    const el = document.getElementById(id);
+    return el ? (el.value || '').trim() : '';
+  }
+
+  function pad(str, len) {
+    str = (str || '').toString();
+    return str + ' '.repeat(Math.max(0, len - str.length));
+  }
+
+  function wrapText(str, width) {
+    if (!str) return [];
+    let lines = [];
+    str.split('\n').forEach(function(paragraph) {
+      let words = paragraph.split(' ');
+      let cur = '';
+      words.forEach(function(w) {
+        if ((cur + (cur ? ' ' : '') + w).length <= width) {
+          cur += (cur ? ' ' : '') + w;
+        } else {
+          if (cur) lines.push(cur);
+          cur = w;
+        }
+      });
+      if (cur) lines.push(cur);
+    });
+    return lines;
+  }
+
+  function generateASCII() {
+    try {
+      const div = '='.repeat(78);
+      const sub = '-'.repeat(78);
+
+      const prec = clean('prec');
+      const dt = clean('dtZulu') || 'N/A';
+      const task = clean('taskNum') || 'N/A';
+      const from = clean('msgSender') || 'N/A';
+      const to = clean('msgTo') || 'N/A';
+      const cc = clean('msgCc') || 'NONE';
+
+      const safety = clean('lifeSafety');
+      const safetyD = clean('lifeSafetyDesc');
+
+      const city = clean('city');
+      const county = clean('county');
+      const st = clean('state');
+      const terr = clean('territory');
+      const lat = clean('lat');
+      const lon = clean('lon');
+      const mgrs = clean('mgrs');
+      const grid = clean('grid');
+
+      const cmt = clean('comments') || 'NONE';
+      const poc = clean('poc') || 'N/A';
+
+      let items = [
+        ["04a. POTS LANDLINES", clean('s_pots'), clean('c_pots')],
+        ["04b. VOIP LANDLINES", clean('s_voip'), clean('c_voip')],
+        ["05a. CELL VOICE",     clean('s_cell_v'), clean('c_cell_v')],
+        ["05b. CELL TEXTS",     clean('s_cell_t'), clean('c_cell_t')],
+        ["06.  AM/FM BROADCAST",clean('s_amfm'), clean('c_amfm')],
+        ["07a. OTA TV",         clean('s_otatv'), clean('c_otatv')],
+        ["07b. SATELLITE TV",   clean('s_sattv'), clean('c_sattv')],
+        ["07c. CABLE TV",       clean('s_cabletv'), clean('c_cabletv')],
+        ["08.  WATER WORKS",    clean('s_water'), clean('c_water')],
+        ["09a. COMM POWER",     clean('s_pwr'), clean('c_pwr')],
+        ["09b. POWER STABLE",   clean('s_pwr_stab'), clean('c_pwr_stab')],
+        ["09c. NATURAL GAS",    clean('s_gas'), clean('c_gas')],
+        ["10.  INTERNET",       clean('s_net'), clean('c_net')],
+        ["11a. NOAA WX RADIO",  clean('s_noaa'), clean('c_noaa')],
+        ["11b. NOAA AUDIO DEG", clean('s_noaa_deg'), clean('c_noaa_deg')]
+      ];
+
+      let lifelineLines = [];
+      items.forEach(function(it) {
+        let line = '  ' + pad(it[0], 21) + ': ' + pad(it[1], 15);
+        if (it[2]) line += ' [' + it[2] + ']';
+        lifelineLines.push(line);
+      });
+
+      let wrappedCmt = wrapText(cmt, 72).map(function(l){ return '  ' + l; }).join('\n');
+
+      const out = div + '\n' +
+        'FIELD SITUATION REPORT (FSR) - WINLINK / PACKET ASCII\n' +
+        div + '\n' +
+        'PRECEDENCE: ' + pad(prec, 16) + ' TASK #: ' + pad(task, 12) + ' DATE/TIME: ' + dt + '\n' +
+        'FROM      : ' + from + '\n' +
+        'TO        : ' + to + '\n' +
+        'INFO (CC) : ' + cc + '\n' +
+        sub + '\n' +
+        '1. LIFE SAFETY CRITICAL : ' + safety + (safetyD ? ' - ' + safetyD : '') + '\n' +
+        sub + '\n' +
+        '2. LOCATION: ' + (city ? city + ', ' : '') + (county ? county + ' CO, ' : '') + st + (terr ? ' (' + terr + ')' : '') + '\n' +
+        '3. COORDINATES:\n' +
+        '   LAT: ' + pad(lat || 'N/A', 12) + ' LON: ' + pad(lon || 'N/A', 12) + ' MGRS: ' + pad(mgrs || 'N/A', 16) + ' GRID: ' + (grid || 'N/A') + '\n' +
+        sub + '\n' +
+        'INFRASTRUCTURE & LIFELINE STATUS:\n' +
+        lifelineLines.join('\n') + '\n' +
+        sub + '\n' +
+        '12. ADDITIONAL COMMENTS:\n' + wrappedCmt + '\n' +
+        sub + '\n' +
+        '13. POINT OF CONTACT: ' + poc + '\n' +
+        div;
+
+      document.getElementById('outputPre').textContent = out;
+    } catch(err) {
+      alert("Error generating text: " + err.message);
+    }
+  }
+
+  function copyASCII() {
+    const txt = document.getElementById('outputPre').textContent;
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(txt).then(function() {
+        alert("FSR copied to clipboard!");
+      }).catch(function() {
+        fallbackCopy();
+      });
+    } else {
+      fallbackCopy();
+    }
+  }
+
+  function fallbackCopy() {
+    const pre = document.getElementById('outputPre');
+    const range = document.createRange();
+    range.selectNode(pre);
+    window.getSelection().removeAllRanges();
+    window.getSelection().addRange(range);
+    document.execCommand('copy');
+    alert("Copied to clipboard!");
+  }
+
+  function clearForm() {
+    if(confirm("Reset Field Situation Report form?")) {
+      document.getElementById('fsrForm').reset();
+      document.getElementById('outputPre').textContent = 'Fill in the fields above and click "Generate Packet ASCII"...';
+    }
+  }
+
+  document.getElementById('btnZuluNow').addEventListener('click', setUTC);
+  document.getElementById('btnGen').addEventListener('click', generateASCII);
+  document.getElementById('btnSaveHtml').addEventListener('click', openSaveModal);
+  document.getElementById('btnCopy').addEventListener('click', copyASCII);
+  document.getElementById('btnClear').addEventListener('click', clearForm);
+
+  // File Name Modal Window & HTML Exporter
+  function openSaveModal() {
+    var now = new Date();
+    var dStr = now.toISOString().slice(0, 10);
+    var defName = 'fsr_' + dStr + '.html';
+    var modal = document.getElementById('saveModalBackdrop');
+    var input = document.getElementById('saveModalFileName');
+    if (input) input.value = defName;
+    if (modal) modal.classList.add('active');
+    setTimeout(function() {
+      if (input) { input.focus(); input.select(); }
+    }, 50);
+  }
+
+  function closeSaveModal() {
+    var modal = document.getElementById('saveModalBackdrop');
+    if (modal) modal.classList.remove('active');
+  }
+
+  function executeSaveHTML() {
+    var input = document.getElementById('saveModalFileName');
+    var chosenName = input ? input.value.trim() : '';
+    if (!chosenName) return;
+    if (!chosenName.toLowerCase().endsWith('.html') && !chosenName.toLowerCase().endsWith('.htm')) {
+      chosenName += '.html';
+    }
+    closeSaveModal();
+
+    document.querySelectorAll('input[type="text"]').forEach(function(el) { el.setAttribute('value', el.value); });
+    document.querySelectorAll('input[type="checkbox"], input[type="radio"]').forEach(function(el) {
+      if (el.checked) el.setAttribute('checked', 'checked');
+      else el.removeAttribute('checked');
+    });
+    document.querySelectorAll('textarea').forEach(function(el) { el.textContent = el.value; });
+    document.querySelectorAll('select').forEach(function(el) {
+      Array.from(el.options).forEach(function(opt) {
+        if (opt.value === el.value) opt.setAttribute('selected', 'selected');
+        else opt.removeAttribute('selected');
+      });
+    });
+    
+    var pre = document.getElementById('ascii-report') || document.getElementById('outputPre') || document.getElementById('preview') || document.getElementById('outputArea');
+    if (pre) pre.textContent = pre.textContent;
+
+    var clonedDoc = document.documentElement.cloneNode(true);
+    var modalInClone = clonedDoc.querySelector('#saveModalBackdrop');
+    if (modalInClone) modalInClone.classList.remove('active');
+
+    var htmlContent = '<!DOCTYPE html>\n' + clonedDoc.outerHTML;
+    var blob = new Blob([htmlContent], { type: 'text/html;charset=utf-8' });
+    var url = URL.createObjectURL(blob);
+    var a = document.createElement('a');
+    a.href = url;
+    a.download = chosenName;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  }
+
+  window.addEventListener('DOMContentLoaded', function() {
+    var cancelBtn = document.getElementById('saveModalCancelBtn');
+    var confirmBtn = document.getElementById('saveModalSaveBtn');
+    var modalInput = document.getElementById('saveModalFileName');
+    var modalBackdrop = document.getElementById('saveModalBackdrop');
+
+    if (cancelBtn) cancelBtn.addEventListener('click', closeSaveModal);
+    if (confirmBtn) confirmBtn.addEventListener('click', executeSaveHTML);
+    if (modalInput) {
+      modalInput.addEventListener('keydown', function(e) {
+        if (e.key === 'Enter') { e.preventDefault(); executeSaveHTML(); }
+        if (e.key === 'Escape') { e.preventDefault(); closeSaveModal(); }
+      });
+    }
+    if (modalBackdrop) {
+      modalBackdrop.addEventListener('click', function(e) {
+        if (e.target === modalBackdrop) closeSaveModal();
+      });
+    }
+
+    var btnSaveMain = document.getElementById('btnSaveHtml');
+    if (btnSaveMain) {
+      btnSaveMain.onclick = null;
+      btnSaveMain.addEventListener('click', openSaveModal);
+    }
+  });
+</script>
+
+  <!-- Custom File Name Modal Window -->
+  <div id="saveModalBackdrop" class="save-modal-backdrop">
+    <div class="save-modal-window">
+      <h3>Save Form as HTML</h3>
+      <p>Enter a name for the saved offline HTML file:</p>
+      <input type="text" id="saveModalFileName" spellcheck="false">
+      <div class="save-modal-actions">
+        <button type="button" class="save-modal-btn save-modal-btn-cancel" id="saveModalCancelBtn">Cancel</button>
+        <button type="button" class="save-modal-btn save-modal-btn-confirm" id="saveModalSaveBtn">Save File</button>
+      </div>
+    </div>
+  </div>
+
+</body>
+</html>

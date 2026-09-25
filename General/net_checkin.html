@@ -1,0 +1,415 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Net Check-In & Roster (Packet Radio)</title>
+  <style>
+    * { box-sizing: border-box; }
+    body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, monospace; background: #eef2f7; color: #222; padding: 20px; margin: 0; }
+    .container { max-width: 940px; margin: 0 auto; background: #fff; padding: 24px; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+    .header { background: #00695c; color: white; padding: 12px; border-radius: 6px; text-align: center; margin-bottom: 18px; }
+    .header h2 { margin: 0; font-size: 1.3rem; letter-spacing: 1px; }
+    .header p { margin: 4px 0 0 0; font-size: 0.85rem; opacity: 0.9; }
+    fieldset { border: 1px solid #80cbc4; border-radius: 6px; padding: 14px; margin-bottom: 14px; background: #f4fbf9; }
+    legend { font-weight: bold; padding: 0 8px; font-size: 0.85rem; color: #004d40; }
+    .row { display: flex; flex-wrap: wrap; gap: 12px; margin-bottom: 10px; }
+    .col { flex: 1; min-width: 140px; display: flex; flex-direction: column; }
+    .label-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px; }
+    label { font-size: 0.8rem; font-weight: 600; color: #333; }
+    input[type="text"], select { padding: 7px 8px; font-size: 0.9rem; border: 1px solid #999; border-radius: 4px; font-family: inherit; width: 100%; }
+    .btn-now { background: #4a5568; color: #fff; padding: 4px 8px; font-size: 0.72rem; border-radius: 4px; border: none; cursor: pointer; }
+    .btn-now:hover { background: #2d3748; }
+    .roster-row { display: flex; gap: 6px; margin-bottom: 6px; align-items: center; }
+    .roster-row input, .roster-row select { font-size: 0.82rem; padding: 6px 5px; }
+    .actions { display: flex; gap: 10px; margin: 18px 0; }
+    button.main-btn { flex: 1; padding: 12px; font-size: 0.95rem; font-weight: bold; border: none; border-radius: 6px; cursor: pointer; }
+    .btn-generate { background: #00695c; color: #fff; }
+    .btn-generate:hover { background: #004d40; }
+    .btn-save { background: #5c6bc0; color: #fff; }
+    .btn-save:hover { background: #3f51b5; }
+    .btn-copy { background: #2e7d32; color: #fff; }
+    .btn-copy:hover { background: #1b5e20; }
+    .btn-clear { background: #c62828; color: #fff; flex: 0.35; }
+    .btn-clear:hover { background: #8e0000; }
+    pre { background: #181c20; color: #39ff14; padding: 14px; border-radius: 6px; overflow-x: auto; font-family: "Courier New", Courier, monospace; font-size: 0.83rem; line-height: 1.32; min-height: 150px; }
+    .nav-bar { margin-bottom: 12px; font-size: 0.85rem; }
+    .nav-bar a { color: #00695c; text-decoration: none; font-weight: bold; }
+    .save-modal-backdrop { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.55); z-index: 99999; justify-content: center; align-items: center; }
+    .save-modal-backdrop.active { display: flex; }
+    .save-modal-window { background: #ffffff; padding: 24px 28px; border-radius: 10px; width: 92%; max-width: 480px; box-shadow: 0 10px 30px rgba(0,0,0,0.3); border: 1px solid #cbd5e1; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
+    .save-modal-window h3 { margin: 0 0 8px 0; font-size: 1.25rem; color: #1e293b; font-weight: bold; }
+    .save-modal-window p { margin: 0 0 16px 0; font-size: 0.88rem; color: #64748b; line-height: 1.4; }
+    .save-modal-window input[type="text"] { width: 100%; padding: 10px 12px; font-size: 0.95rem; border: 2px solid #94a3b8; border-radius: 6px; margin-bottom: 20px; font-family: inherit; box-sizing: border-box; text-transform: none; }
+    .save-modal-window input[type="text"]:focus { border-color: #2563eb; outline: none; }
+    .save-modal-actions { display: flex; gap: 10px; justify-content: flex-end; }
+    .save-modal-btn { padding: 9px 18px; font-size: 0.9rem; font-weight: bold; border-radius: 6px; border: none; cursor: pointer; }
+    .save-modal-btn-confirm { background: #2563eb; color: #ffffff; }
+    .save-modal-btn-confirm:hover { background: #1d4ed8; }
+    .save-modal-btn-cancel { background: #e2e8f0; color: #334155; }
+    .save-modal-btn-cancel:hover { background: #cbd5e1; }
+  </style>
+</head>
+<body>
+<div class="container">
+  <div class="nav-bar"><a href="../index.html">&larr; Back to Packet Forms Hub</a></div>
+  <div class="header">
+    <h2>NET CHECK-IN LOG / ROSTER</h2>
+    <p>Net Control Station (NCS) Multi-Station Check-In & Traffic Log (Packet ASCII)</p>
+  </div>
+
+  <form id="netRosterForm" onsubmit="event.preventDefault(); return false;">
+    <fieldset>
+      <legend>NET SESSION HEADER</legend>
+      <div class="row">
+        <div class="col" style="flex: 2;"><label for="netTitle">Net Name / Purpose</label><input type="text" id="netTitle" placeholder="e.g. DISTRICT 3 EMERGENCY ARES NET"></div>
+        <div class="col"><label for="netFreq">Frequency / Mode</label><input type="text" id="netFreq" placeholder="146.520 Simplex / AX.25"></div>
+      </div>
+      <div class="row">
+        <div class="col">
+          <div class="label-row">
+            <label for="netDateTime">Net Date / Time</label>
+            <button type="button" class="btn-now" id="btnNetNow">Current UTC</button>
+          </div>
+          <input type="text" id="netDateTime" placeholder="YYYY-MM-DD HHMMZ">
+        </div>
+        <div class="col"><label for="ncsCall">NCS Callsign</label><input type="text" id="ncsCall" placeholder="N0CALL"></div>
+        <div class="col"><label for="ncsOp">NCS Operator Name</label><input type="text" id="ncsOp"></div>
+      </div>
+    </fieldset>
+
+    <fieldset>
+      <legend>NET CHECK-IN STATIONS</legend>
+      <div style="font-size: 0.75rem; font-weight: bold; margin-bottom: 6px; color: #555;">
+        # | Time (Z) | Callsign | Name / Tactical | Location / Grid | Power / Mode | Traffic / Remarks
+      </div>
+      <div id="rosterContainer">
+        <div class="roster-row">
+          <input type="text" style="width: 38px;" value="1" readonly>
+          <input type="text" style="width: 75px;" placeholder="TIME" class="r-time">
+          <input type="text" style="width: 100px;" placeholder="CALLSIGN" class="r-call">
+          <input type="text" style="width: 130px;" placeholder="NAME / TACTICAL" class="r-name">
+          <input type="text" style="width: 130px;" placeholder="LOCATION / GRID" class="r-loc">
+          <select style="width: 115px;" class="r-pwr">
+            <option value="COMM">COMM/GRID</option>
+            <option value="BATT">BATTERY</option>
+            <option value="GEN">GENERATOR</option>
+            <option value="SOLAR">SOLAR</option>
+          </select>
+          <input type="text" style="flex: 1;" placeholder="No Traffic / QRU / Msg on hand" class="r-remarks">
+        </div>
+        <div class="roster-row">
+          <input type="text" style="width: 38px;" value="2" readonly>
+          <input type="text" style="width: 75px;" placeholder="TIME" class="r-time">
+          <input type="text" style="width: 100px;" placeholder="CALLSIGN" class="r-call">
+          <input type="text" style="width: 130px;" placeholder="NAME / TACTICAL" class="r-name">
+          <input type="text" style="width: 130px;" placeholder="LOCATION / GRID" class="r-loc">
+          <select style="width: 115px;" class="r-pwr">
+            <option value="COMM">COMM/GRID</option>
+            <option value="BATT">BATTERY</option>
+            <option value="GEN">GENERATOR</option>
+            <option value="SOLAR">SOLAR</option>
+          </select>
+          <input type="text" style="flex: 1;" placeholder="No Traffic / QRU / Msg on hand" class="r-remarks">
+        </div>
+        <div class="roster-row">
+          <input type="text" style="width: 38px;" value="3" readonly>
+          <input type="text" style="width: 75px;" placeholder="TIME" class="r-time">
+          <input type="text" style="width: 100px;" placeholder="CALLSIGN" class="r-call">
+          <input type="text" style="width: 130px;" placeholder="NAME / TACTICAL" class="r-name">
+          <input type="text" style="width: 130px;" placeholder="LOCATION / GRID" class="r-loc">
+          <select style="width: 115px;" class="r-pwr">
+            <option value="COMM">COMM/GRID</option>
+            <option value="BATT">BATTERY</option>
+            <option value="GEN">GENERATOR</option>
+            <option value="SOLAR">SOLAR</option>
+          </select>
+          <input type="text" style="flex: 1;" placeholder="No Traffic / QRU / Msg on hand" class="r-remarks">
+        </div>
+        <div class="roster-row">
+          <input type="text" style="width: 38px;" value="4" readonly>
+          <input type="text" style="width: 75px;" placeholder="TIME" class="r-time">
+          <input type="text" style="width: 100px;" placeholder="CALLSIGN" class="r-call">
+          <input type="text" style="width: 130px;" placeholder="NAME / TACTICAL" class="r-name">
+          <input type="text" style="width: 130px;" placeholder="LOCATION / GRID" class="r-loc">
+          <select style="width: 115px;" class="r-pwr">
+            <option value="COMM">COMM/GRID</option>
+            <option value="BATT">BATTERY</option>
+            <option value="GEN">GENERATOR</option>
+            <option value="SOLAR">SOLAR</option>
+          </select>
+          <input type="text" style="flex: 1;" placeholder="No Traffic / QRU / Msg on hand" class="r-remarks">
+        </div>
+        <div class="roster-row">
+          <input type="text" style="width: 38px;" value="5" readonly>
+          <input type="text" style="width: 75px;" placeholder="TIME" class="r-time">
+          <input type="text" style="width: 100px;" placeholder="CALLSIGN" class="r-call">
+          <input type="text" style="width: 130px;" placeholder="NAME / TACTICAL" class="r-name">
+          <input type="text" style="width: 130px;" placeholder="LOCATION / GRID" class="r-loc">
+          <select style="width: 115px;" class="r-pwr">
+            <option value="COMM">COMM/GRID</option>
+            <option value="BATT">BATTERY</option>
+            <option value="GEN">GENERATOR</option>
+            <option value="SOLAR">SOLAR</option>
+          </select>
+          <input type="text" style="flex: 1;" placeholder="No Traffic / QRU / Msg on hand" class="r-remarks">
+        </div>
+      </div>
+      <button type="button" class="btn-now" id="btnAddCheckin" style="margin-top: 6px; padding: 6px 12px; font-size: 0.8rem;">+ Add Station Check-in</button>
+    </fieldset>
+
+    <fieldset>
+      <legend>SESSION SUMMARY</legend>
+      <div class="row">
+        <div class="col"><label for="netClose">Net Close Time</label><input type="text" id="netClose" placeholder="e.g. 2130Z"></div>
+        <div class="col"><label for="totalCheckins">Total Stations</label><input type="text" id="totalCheckins" placeholder="AUTO" readonly style="background:#eee;"></div>
+        <div class="col"><label for="totalTraffic">Formal Messages Handled</label><input type="text" id="totalTraffic" placeholder="0"></div>
+      </div>
+    </fieldset>
+
+    <div class="actions">
+      <button type="button" class="main-btn btn-generate" id="btnGen">Generate Packet ASCII</button>
+      <button type="button" class="main-btn btn-save" id="btnSaveHtml">Save as HTML</button>
+      <button type="button" class="main-btn btn-copy" id="btnCopy">Copy ASCII</button>
+      <button type="button" class="main-btn btn-clear" id="btnClear">Reset</button>
+    </div>
+  </form>
+
+  <label style="font-weight:bold;">Formatted ASCII for Packet / BBS Transmission:</label>
+  <pre id="outputPre">Fill in the fields above and click "Generate Packet ASCII"...</pre>
+</div>
+
+  <!-- Custom File Name Modal Window -->
+  <div id="saveModalBackdrop" class="save-modal-backdrop">
+    <div class="save-modal-window">
+      <h3>Save Form as HTML</h3>
+      <p>Enter a name for the saved offline HTML file:</p>
+      <input type="text" id="saveModalFileName" spellcheck="false">
+      <div class="save-modal-actions">
+        <button type="button" class="save-modal-btn save-modal-btn-cancel" id="saveModalCancelBtn">Cancel</button>
+        <button type="button" class="save-modal-btn save-modal-btn-confirm" id="saveModalSaveBtn">Save File</button>
+      </div>
+    </div>
+  </div>
+
+<script>
+  function addCheckinRow() {
+    const container = document.getElementById('rosterContainer');
+    const count = container.querySelectorAll('.roster-row').length + 1;
+    const div = document.createElement('div');
+    div.className = 'roster-row';
+    div.innerHTML = '<input type="text" style="width: 38px;" value="' + count + '" readonly>' +
+      '<input type="text" style="width: 75px;" placeholder="TIME" class="r-time">' +
+      '<input type="text" style="width: 100px;" placeholder="CALLSIGN" class="r-call">' +
+      '<input type="text" style="width: 130px;" placeholder="NAME / TACTICAL" class="r-name">' +
+      '<input type="text" style="width: 130px;" placeholder="LOCATION / GRID" class="r-loc">' +
+      '<select style="width: 115px;" class="r-pwr">' +
+        '<option value="COMM">COMM/GRID</option>' +
+        '<option value="BATT">BATTERY</option>' +
+        '<option value="GEN">GENERATOR</option>' +
+        '<option value="SOLAR">SOLAR</option>' +
+      '</select>' +
+      '<input type="text" style="flex: 1;" placeholder="No Traffic / Remarks" class="r-remarks">';
+    container.appendChild(div);
+  }
+
+  function setUTC() {
+    const now = new Date();
+    const y = now.getUTCFullYear();
+    const m = String(now.getUTCMonth()+1).padStart(2,'0');
+    const d = String(now.getUTCDate()).padStart(2,'0');
+    const hh = String(now.getUTCHours()).padStart(2,'0');
+    const mm = String(now.getUTCMinutes()).padStart(2,'0');
+    document.getElementById('netDateTime').value = y + '-' + m + '-' + d + ' ' + hh + mm + 'Z';
+  }
+
+  function clean(id) {
+    const el = document.getElementById(id);
+    return el ? (el.value || '').trim() : '';
+  }
+
+  function pad(str, len) {
+    str = (str || '').toString();
+    return str + ' '.repeat(Math.max(0, len - str.length));
+  }
+
+  function generateASCII() {
+    try {
+      const div = '='.repeat(78);
+      const sub = '-'.repeat(78);
+      const net = clean('netTitle') || 'NET SESSION';
+      const freq = clean('netFreq') || 'N/A';
+      const dt = clean('netDateTime') || 'N/A';
+      const ncs = clean('ncsCall') || 'N/A';
+      const op = clean('ncsOp') || 'N/A';
+      const closeT = clean('netClose') || 'OPEN';
+      const traf = clean('totalTraffic') || '0';
+
+      let lines = [];
+      let activeCount = 0;
+      const rows = document.querySelectorAll('.roster-row');
+      rows.forEach(function(r, idx) {
+        const time = pad((r.querySelector('.r-time').value || '').trim(), 5);
+        const call = pad((r.querySelector('.r-call').value || '').trim(), 9);
+        const name = pad((r.querySelector('.r-name').value || '').trim(), 13);
+        const loc = pad((r.querySelector('.r-loc').value || '').trim(), 13);
+        const pwr = pad((r.querySelector('.r-pwr').value || 'COMM'), 6);
+        const rem = (r.querySelector('.r-remarks').value || '').trim();
+
+        if (call.trim()) {
+          activeCount++;
+          const numStr = pad(String(activeCount), 3);
+          lines.push(numStr + '| ' + time + ' | ' + call + ' | ' + name + ' | ' + loc + ' | ' + pwr + ' | ' + (rem || 'QRU'));
+        }
+      });
+
+      document.getElementById('totalCheckins').value = activeCount;
+
+      if (lines.length === 0) {
+        lines.push('  NO STATIONS LOGGED');
+      }
+
+      const out = div + '\n' +
+        'NET CHECK-IN ROSTER & TRAFFIC LOG (PACKET ASCII)\n' +
+        div + '\n' +
+        'NET NAME   : ' + net + '\n' +
+        'FREQ / MODE: ' + freq + '          DATE/TIME: ' + dt + '\n' +
+        'NCS CALL   : ' + pad(ncs, 10) + ' NCS OPERATOR: ' + op + '\n' +
+        sub + '\n' +
+        '#  | TIME  | CALLSIGN  | NAME/TACTICAL | LOCATION/GRID | POWER  | TRAFFIC/REMARKS\n' +
+        sub + '\n' +
+        lines.join('\n') + '\n' +
+        sub + '\n' +
+        'TOTAL STATIONS: ' + activeCount + '     NET CLOSED: ' + closeT + '     MESSAGES: ' + traf + '\n' +
+        div;
+
+      document.getElementById('outputPre').textContent = out;
+    } catch(err) {
+      alert("Error generating text: " + err.message);
+    }
+  }
+
+  function copyASCII() {
+    const txt = document.getElementById('outputPre').textContent;
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(txt).then(function() {
+        alert("Net check-in log copied to clipboard!");
+      }).catch(function() {
+        fallbackCopy();
+      });
+    } else {
+      fallbackCopy();
+    }
+  }
+
+  function fallbackCopy() {
+    const pre = document.getElementById('outputPre');
+    const range = document.createRange();
+    range.selectNode(pre);
+    window.getSelection().removeAllRanges();
+    window.getSelection().addRange(range);
+    document.execCommand('copy');
+    alert("Copied to clipboard!");
+  }
+
+  function clearForm() {
+    if(confirm("Reset Net Roster form?")) {
+      document.getElementById('netRosterForm').reset();
+      document.getElementById('outputPre').textContent = 'Fill in the fields above and click "Generate Packet ASCII"...';
+    }
+  }
+
+  document.getElementById('btnNetNow').addEventListener('click', setUTC);
+  document.getElementById('btnAddCheckin').addEventListener('click', addCheckinRow);
+  document.getElementById('btnGen').addEventListener('click', generateASCII);
+  document.getElementById('btnCopy').addEventListener('click', copyASCII);
+  document.getElementById('btnClear').addEventListener('click', clearForm);
+
+  // --- File Name Modal Window & HTML Exporter ---
+  function openSaveModal() {
+    var now = new Date();
+    var dStr = now.toISOString().slice(0, 10);
+    var defName = 'net_checkin_' + dStr + '.html';
+    var modal = document.getElementById('saveModalBackdrop');
+    var input = document.getElementById('saveModalFileName');
+    if (input) input.value = defName;
+    if (modal) modal.classList.add('active');
+    setTimeout(function() {
+      if (input) { input.focus(); input.select(); }
+    }, 50);
+  }
+
+  function closeSaveModal() {
+    var modal = document.getElementById('saveModalBackdrop');
+    if (modal) modal.classList.remove('active');
+  }
+
+  function executeSaveHTML() {
+    var input = document.getElementById('saveModalFileName');
+    var chosenName = input ? input.value.trim() : '';
+    if (!chosenName) return;
+    if (!chosenName.toLowerCase().endsWith('.html') && !chosenName.toLowerCase().endsWith('.htm')) {
+      chosenName += '.html';
+    }
+    closeSaveModal();
+
+    document.querySelectorAll('input[type="text"]').forEach(function(el) { el.setAttribute('value', el.value); });
+    document.querySelectorAll('input[type="checkbox"], input[type="radio"]').forEach(function(el) {
+      if (el.checked) el.setAttribute('checked', 'checked');
+      else el.removeAttribute('checked');
+    });
+    document.querySelectorAll('textarea').forEach(function(el) { el.textContent = el.value; });
+    document.querySelectorAll('select').forEach(function(el) {
+      Array.from(el.options).forEach(function(opt) {
+        if (opt.value === el.value) opt.setAttribute('selected', 'selected');
+        else opt.removeAttribute('selected');
+      });
+    });
+    
+    var pre = document.getElementById('ascii-report') || document.getElementById('outputPre') || document.getElementById('preview') || document.getElementById('outputArea');
+    if (pre) pre.textContent = pre.textContent;
+
+    var clonedDoc = document.documentElement.cloneNode(true);
+    var modalInClone = clonedDoc.querySelector('#saveModalBackdrop');
+    if (modalInClone) modalInClone.classList.remove('active');
+
+    var htmlContent = '<!DOCTYPE html>\n' + clonedDoc.outerHTML;
+    var blob = new Blob([htmlContent], { type: 'text/html;charset=utf-8' });
+    var url = URL.createObjectURL(blob);
+    var a = document.createElement('a');
+    a.href = url;
+    a.download = chosenName;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  }
+
+  // Initialize event listeners safely after DOM loads
+  window.addEventListener('DOMContentLoaded', function() {
+    var cancelBtn = document.getElementById('saveModalCancelBtn');
+    var confirmBtn = document.getElementById('saveModalSaveBtn');
+    var modalInput = document.getElementById('saveModalFileName');
+    var modalBackdrop = document.getElementById('saveModalBackdrop');
+
+    if (cancelBtn) cancelBtn.addEventListener('click', closeSaveModal);
+    if (confirmBtn) confirmBtn.addEventListener('click', executeSaveHTML);
+    if (modalInput) {
+      modalInput.addEventListener('keydown', function(e) {
+        if (e.key === 'Enter') { e.preventDefault(); executeSaveHTML(); }
+        if (e.key === 'Escape') { e.preventDefault(); closeSaveModal(); }
+      });
+    }
+    if (modalBackdrop) {
+      modalBackdrop.addEventListener('click', function(e) {
+        if (e.target === modalBackdrop) closeSaveModal();
+      });
+    }
+
+    var btnSaveMain = document.getElementById('btnSaveHtml');
+    if (btnSaveMain) {
+      btnSaveMain.addEventListener('click', openSaveModal);
+    }
+  });
+</script>
+</body>
+</html>

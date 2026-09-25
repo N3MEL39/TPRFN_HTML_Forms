@@ -1,0 +1,433 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>TPRFN / RRI Radiogram Generator</title>
+  <style>
+    :root { --primary: #2e7d32; --secondary: #1976d2; --danger: #c62828; --warning: #f57c00; --dark: #111; --light: #f9f9f9; --info: #546e7a; --success: #388e3c; }
+    html, body { height: auto; margin: 0; padding: 0; background-color: #eceff1; }
+    body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; padding: 15px; line-height: 1.6; }
+    .nav-bar { max-width: 1000px; margin: 0 auto 10px auto; font-size: 0.88rem; }
+    .nav-bar a { color: var(--primary); text-decoration: none; font-weight: bold; }
+    .radiogram-container { 
+      font-family: 'Courier New', Courier, monospace; 
+      width: 98%; max-width: 1000px; margin: 0 auto 20px auto; padding: 35px; 
+      border: 2px solid #333; background: var(--light); 
+      box-shadow: 0 15px 35px rgba(0,0,0,0.3); border-radius: 12px; 
+      box-sizing: border-box; height: auto; overflow: visible; 
+    }
+    .header { text-align: center; border-bottom: 3px solid #333; margin-bottom: 25px; padding-bottom: 15px; }
+    .header h2 { margin: 0; color: var(--primary); font-size: clamp(22px, 6vw, 32px); letter-spacing: 1px; }
+    .section-title { font-size: 14px; font-weight: bold; color: var(--primary); margin: 30px 0 15px 0; text-transform: uppercase; border-left: 6px solid var(--primary); padding: 8px 15px; background: #e8f5e9; }
+    .row { display: flex; margin-bottom: 15px; align-items: center; flex-wrap: wrap; gap: 10px; }
+    .row label { flex: 0 0 220px; font-weight: bold; font-size: 15px; color: #333; }
+    .row input, .row select { flex: 1 1 300px; padding: 12px; border: 1px solid #aaa; border-radius: 5px; text-transform: uppercase; font-family: inherit; font-size: 15px; box-sizing: border-box; }
+    .multi-input { display: flex; gap: 10px; flex: 1 1 300px; flex-wrap: wrap; align-items: center; }
+    .btn-inline { padding: 12px 20px; background: #607d8b; color: white; border: none; border-radius: 4px; cursor: pointer; font-weight: bold; font-size: 13px; transition: 0.3s; }
+    .btn-inline:hover { background: #455a64; }
+    textarea { width: 100%; height: 200px; margin-top: 15px; text-transform: uppercase; font-family: inherit; padding: 15px; border: 1px solid #aaa; border-radius: 5px; box-sizing: border-box; resize: vertical; font-size: 16px; }
+    .btns-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin: 30px 0; }
+    button { padding: 15px; font-weight: bold; cursor: pointer; color: white; border: none; border-radius: 6px; font-size: 14px; transition: 0.2s; }
+    .btn-gen { background: var(--primary); grid-column: span 2; font-size: 18px; }
+    .btn-gen:hover { background: #1b5e20; }
+    .btn-copy { background: var(--secondary); }
+    .btn-copy:hover { background: #0d47a1; }
+    .btn-save-txt { background: var(--warning); color: #000; }
+    .btn-save-txt:hover { background: #e65100; color: #fff; }
+    .btn-save-html { background: #5c6bc0; color: #fff; }
+    .btn-save-html:hover { background: #3949ab; }
+    .btn-clear { background: var(--danger); }
+    .btn-clear:hover { background: #b71c1c; }
+    .btn-external { background: var(--secondary); font-size: 14px; text-decoration: none; display: flex; align-items: center; justify-content: center; text-align: center; margin-bottom: 20px; width: 100%; cursor: pointer; border-radius: 4px; }
+    .btn-external:hover { background: #1565c0; }
+    #preview { 
+      width: 100%; min-height: 380px; height: auto; 
+      background: var(--dark); color: #00ff41; 
+      border: 3px solid #444; padding: 25px; 
+      white-space: pre-wrap; word-wrap: break-word; font-size: 15px; 
+      margin-top: 15px; border-radius: 6px; box-sizing: border-box; 
+      box-shadow: inset 0 0 20px #000; overflow: visible; 
+    }
+    .footer-sig { margin-top: 40px; text-align: center; font-size: 13px; color: #888; border-top: 1px solid #ddd; padding-top: 20px; font-family: sans-serif; font-weight: bold; letter-spacing: 2px; }
+    @media (max-width: 700px) {
+      .row label { flex: 1 1 100%; }
+      .btns-grid { grid-template-columns: 1fr; }
+      .btn-gen { grid-column: span 1; }
+    }
+  
+    /* Modal Save Dialog Window */
+    .save-modal-backdrop {
+      display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+      background: rgba(0,0,0,0.55); z-index: 99999; justify-content: center; align-items: center;
+    }
+    .save-modal-backdrop.active { display: flex; }
+    .save-modal-window {
+      background: #ffffff; padding: 24px 28px; border-radius: 10px; width: 92%; max-width: 480px;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.3); border: 1px solid #cbd5e1; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    }
+    .save-modal-window h3 { margin: 0 0 8px 0; font-size: 1.25rem; color: #1e293b; font-weight: bold; }
+    .save-modal-window p { margin: 0 0 16px 0; font-size: 0.88rem; color: #64748b; line-height: 1.4; }
+    .save-modal-window input[type="text"] {
+      width: 100%; padding: 10px 12px; font-size: 0.95rem; border: 2px solid #94a3b8; border-radius: 6px;
+      margin-bottom: 20px; font-family: inherit; box-sizing: border-box; text-transform: none;
+    }
+    .save-modal-window input[type="text"]:focus { border-color: #2563eb; outline: none; }
+    .save-modal-actions { display: flex; gap: 10px; justify-content: flex-end; }
+    .save-modal-btn { padding: 9px 18px; font-size: 0.9rem; font-weight: bold; border-radius: 6px; border: none; cursor: pointer; }
+    .save-modal-btn-confirm { background: #2563eb; color: #ffffff; }
+    .save-modal-btn-confirm:hover { background: #1d4ed8; }
+    .save-modal-btn-cancel { background: #e2e8f0; color: #334155; }
+    .save-modal-btn-cancel:hover { background: #cbd5e1; }
+
+  </style>
+</head>
+<body onload="initForm()">
+
+<div class="nav-bar"><a href="../index.html">&larr; Back to Packet Forms Hub</a></div>
+
+<div class="radiogram-container">
+  <div class="header">
+    <h2>TPRFN / RRI RADIOGRAM GENERATOR</h2>
+    <div style="font-weight:bold; margin-top:8px; font-size: 14px; color: #555;">NTS DIGITAL TRAFFIC BENCH</div>
+  </div>
+
+  <button type="button" class="btn-external" onclick="window.open('https://www.tprfn.net/tprfn-lets-get-connected/tprfn-radiogram-instructions', '_blank')">🔗 RADIOGRAM INSTRUCTIONS (OPENS IN NEW WINDOW)</button>
+
+  <form id="tprfnForm" onsubmit="event.preventDefault(); return false;">
+    <div class="section-title">1. Station of Origin</div>
+    <div class="row"><label for="s_name">Op Name:</label><input type="text" id="s_name" placeholder="FULL NAME"></div>
+    <div class="row"><label for="s_call">Station Callsign:</label><input type="text" id="s_call" placeholder="N3MEL"></div>
+    <div class="row"><label for="s_place">Place of Origin:</label><input type="text" id="s_place" placeholder="CITY STATE"></div>
+
+    <div class="section-title">2. Preamble (The Header)</div>
+    <div class="row"><label for="num">Message Number:</label><input type="text" id="num" placeholder="1"></div>
+    <div class="row"><label for="prec">Precedence:</label>
+      <select id="prec">
+        <option value="R">ROUTINE (R)</option>
+        <option value="W">WELFARE (W)</option>
+        <option value="P">PRIORITY (P)</option>
+        <option value="EMERGENCY">EMERGENCY</option>
+      </select>
+    </div>
+    <div class="row"><label for="hx">Handling (HX):</label>
+      <select id="hx">
+        <option value="">NONE</option>
+        <option value="HXA">HXA</option>
+        <option value="HXB">HXB</option>
+        <option value="HXC">HXC</option>
+        <option value="HXD">HXD</option>
+        <option value="HXE">HXE</option>
+        <option value="HXF">HXF</option>
+        <option value="HXG">HXG</option>
+      </select>
+    </div>
+    <div class="row"><label for="date_val">Date Filed:</label><input type="text" id="date_val" placeholder="MMM DD"></div>
+    <div class="row">
+      <label for="time_val">Time Filed (UTC):</label>
+      <div class="multi-input">
+        <input type="text" id="time_val" placeholder="0000" style="flex: 1;">
+        <button type="button" class="btn-inline" id="btnNowZulu">🕒 NOW</button>
+      </div>
+    </div>
+
+    <div class="section-title">3. The Address (Recipient)</div>
+    <div class="row"><label for="r_name">Recipient Name:</label><input type="text" id="r_name"></div>
+    <div class="row"><label for="r_call">Recipient Callsign:</label><input type="text" id="r_call"></div>
+    <div class="row"><label for="addr1">Street Address:</label><input type="text" id="addr1"></div>
+    <div class="row"><label for="addr2">Apt / Suite / Box:</label><input type="text" id="addr2"></div>
+    <div class="row">
+      <label for="city">City ST Zip:</label>
+      <div class="multi-input">
+        <input type="text" id="city" placeholder="TOWN" style="flex:2">
+        <select id="state" style="flex:1;">
+          <option value="">ST</option>
+          <option value="AL">AL</option><option value="AK">AK</option><option value="AZ">AZ</option><option value="AR">AR</option>
+          <option value="CA">CA</option><option value="CO">CO</option><option value="CT">CT</option><option value="DE">DE</option>
+          <option value="DC">DC</option><option value="FL">FL</option><option value="GA">GA</option><option value="HI">HI</option>
+          <option value="ID">ID</option><option value="IL">IL</option><option value="IN">IN</option><option value="IA">IA</option>
+          <option value="KS">KS</option><option value="KY">KY</option><option value="LA">LA</option><option value="ME">ME</option>
+          <option value="MD">MD</option><option value="MA">MA</option><option value="MI">MI</option><option value="MN">MN</option>
+          <option value="MS">MS</option><option value="MO">MO</option><option value="MT">MT</option><option value="NE">NE</option>
+          <option value="NV">NV</option><option value="NH">NH</option><option value="NJ">NJ</option><option value="NM">NM</option>
+          <option value="NY">NY</option><option value="NC">NC</option><option value="ND">ND</option><option value="OH">OH</option>
+          <option value="OK">OK</option><option value="OR">OR</option><option value="PA">PA</option><option value="RI">RI</option>
+          <option value="SC">SC</option><option value="SD">SD</option><option value="TN">TN</option><option value="TX">TX</option>
+          <option value="UT">UT</option><option value="VT">VT</option><option value="VA">VA</option><option value="WA">WA</option>
+          <option value="WV">WV</option><option value="WI">WI</option><option value="WY">WY</option>
+        </select>
+        <input type="text" id="zip" placeholder="ZIP" style="flex:1.5">
+      </div>
+    </div>
+    <div class="row"><label for="phone">Phone Number:</label><input type="text" id="phone"></div>
+    <div class="row"><label for="email">Email Address:</label><input type="text" id="email"></div>
+
+    <div class="section-title">4. The Text (Message Body)</div>
+    <textarea id="msg" placeholder="DASH BECOMES 'DASH', # BECOMES 'NR', .COM BECOMES 'DOT COM'."></textarea>
+
+    <div class="btns-grid">
+      <button type="button" class="btn-gen" id="btnGen">GENERATE RRI MESSAGE</button>
+      <button type="button" class="btn-copy" id="btnCopy">COPY FOR TERMINAL</button>
+      <button type="button" class="btn-save-txt" id="btnSaveTxt">SAVE AS .TXT</button>
+      <button type="button" class="btn-save-html" id="btnSaveHtml">SAVE AS HTML</button>
+      <button type="button" class="btn-clear" id="btnClear">RESET RECIPIENT/MSG</button>
+    </div>
+  </form>
+
+  <div class="section-title">5. RRI / ARRL ASCII Output</div>
+  <pre id="preview">Ready for input...</pre>
+
+  <div class="footer-sig">CODE CREATED BY N3MEL &bull; PACKET RADIO EMCOMM ADAPTATION</div>
+</div>
+
+<textarea id="hidden_copy" style="position:absolute; left:-9999px;"></textarea>
+
+<script>
+  function initForm() { setZuluTime(); }
+
+  function setZuluTime() {
+    const now = new Date();
+    const months = ["JAN", "FEB", "MAR", "APR", "MAY", "JUN", "JUL", "AUG", "SEP", "OCT", "NOV", "DEC"];
+    document.getElementById('date_val').value = months[now.getUTCMonth()] + " " + String(now.getUTCDate()).padStart(2, '0');
+    document.getElementById('time_val').value = String(now.getUTCHours()).padStart(2, '0') + String(now.getUTCMinutes()).padStart(2, '0');
+  }
+
+  function generate() {
+    try {
+      const toAsc = (t) => (t || "").trim().toUpperCase().replace(/[^\x00-\x7F]/g, "");
+      
+      const strip = (t) => {
+        let work = toAsc(t);
+        work = work.replace(/'/g, "").replace(/#/g, " NR ").replace(/-/g, " DASH "); 
+        return work.replace(/[.,\/!$%\^&\*;:{}=_`~()]/g, " ");
+      };
+      
+      const getVal = (id) => strip(document.getElementById(id).value).replace(/\s+/g, " ");
+      
+      let s_name = getVal('s_name'), s_call = getVal('s_call'), s_place = getVal('s_place');
+      let num = document.getElementById('num').value.trim().replace(/^0+/, "") || "1";
+      let prec = document.getElementById('prec').value, hx = getVal('hx');
+      let date_f = getVal('date_val'), time_f = getVal('time_val');
+      let r_name = getVal('r_name'), r_call = getVal('r_call'), addr1 = getVal('addr1'), addr2 = getVal('addr2');
+      let r_city = getVal('city'), r_state = document.getElementById('state').value, zip = getVal('zip');
+      
+      let rawPhone = document.getElementById('phone').value;
+      let formattedPhone = rawPhone.replace(/[^\d]/g, " ").replace(/\s+/g, " ").trim();
+      
+      let email = document.getElementById('email').value.toUpperCase();
+      let msg = document.getElementById('msg').value.toUpperCase();
+      
+      const msgFmt = (t) => {
+        let work = t.replace(/'/g, "");
+        work = work.replace(/\.NET/g, " DOT NET ").replace(/\.COM/g, " DOT COM ").replace(/\.ORG/g, " DOT ORG ").replace(/\.EDU/g, " DOT EDU ").replace(/\.GOV/g, " DOT GOV ");
+        work = work.replace(/-/g, " DASH ").replace(/#/g, " NR ").replace(/\./g, " X ").replace(/@/g, " ATSIGN ").replace(/_/g, " UNDERSCORE ");
+        return work.replace(/[!$%\^&\*;{}=~()]/g, " ");
+      };
+      
+      const emailFmt = (t) => t.replace(/@/g, " ATSIGN ").replace(/\./g, " DOT ").replace(/_/g, " UNDERSCORE ").replace(/-/g, " DASH ");
+
+      let processedMsg = msgFmt(msg);
+      let finalWords = processedMsg.split(/\s+/).filter(w => w.length > 0);
+      
+      let out = "";
+      if(zip && r_state) out += "ST " + zip + "@NTS" + r_state + "\n";
+      out += (r_city || "DESTINATION") + (r_call ? " " + r_call : "") + "\n\n";
+      
+      out += num + " " + prec + " " + (hx ? hx + " " : "") + (s_call || "ORIGIN") + " " + finalWords.length + " " + (s_place || "ORIGIN") + " " + (time_f ? time_f + "Z " : "") + date_f + "\n";
+      out += (r_name || "RECIPIENT") + (r_call ? " " + r_call : "") + "\n";
+      if(addr1) out += addr1 + "\n";
+      if(addr2) out += addr2 + "\n";
+      if(r_city || r_state || zip) out += (r_city ? r_city + " " : "") + (r_state ? r_state + " " : "") + (zip || "") + "\n";
+      if(formattedPhone) out += formattedPhone + "\n";
+      if(email) out += emailFmt(email).replace(/[.,\/#!$%\^&\*;:{}=\-_`~()]/g, "") + "\n";
+      out += "BT\n";
+      for (let i = 0; i < finalWords.length; i += 5) {
+        out += finalWords.slice(i, i + 5).join(' ') + "\n";
+      }
+      out += "BT\n" + (s_name ? s_name + " " : "") + (s_call || "") + "\n/EX";
+      
+      document.getElementById('preview').innerText = out;
+    } catch(err) {
+      alert("Error generating radiogram: " + err.message);
+    }
+  }
+
+  function copyClean() {
+    const t = document.getElementById('preview').innerText;
+    if(t.includes("Ready")) {
+      alert("Please click GENERATE RRI MESSAGE first.");
+      return;
+    }
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(t).then(function() {
+        showCopyNotice();
+      }).catch(function() {
+        fallbackCopy(t);
+      });
+    } else {
+      fallbackCopy(t);
+    }
+  }
+
+  function fallbackCopy(t) {
+    const h = document.getElementById('hidden_copy');
+    h.value = t;
+    h.select();
+    document.execCommand('copy');
+    showCopyNotice();
+  }
+
+  function showCopyNotice() {
+    const b = document.getElementById('btnCopy');
+    const orig = b.innerText;
+    b.innerText = "✅ COPIED!";
+    setTimeout(() => { b.innerText = orig; }, 2000);
+  }
+
+  function saveToFile() {
+    const t = document.getElementById('preview').innerText;
+    if(t.includes("Ready")) {
+      alert("Please generate the message before saving.");
+      return;
+    }
+    const b = new Blob([t], { type: "text/plain;charset=us-ascii" });
+    const a = document.createElement("a");
+    let defTxt = "Radiogram_" + (document.getElementById('num').value || "1") + ".txt";
+    let chosenTxt = prompt('Enter filename to save as (.txt):', defTxt);
+    if (!chosenTxt) return;
+    if (!chosenTxt.toLowerCase().endsWith('.txt')) chosenTxt += '.txt';
+    a.download = chosenTxt;
+    a.href = window.URL.createObjectURL(b);
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+  }
+
+      
+
+  function clearForm() {
+    if(confirm("Clear current recipient and message data?")) {
+      ['num','r_name','r_call','addr1','addr2','city','zip','phone','email','msg','time_val'].forEach(id => document.getElementById(id).value = "");
+      document.getElementById('state').selectedIndex = 0;
+      setZuluTime();
+      document.getElementById('preview').innerText = "Ready for input...";
+    }
+  }
+
+  document.getElementById('btnNowZulu').addEventListener('click', setZuluTime);
+  document.getElementById('btnGen').addEventListener('click', generate);
+  document.getElementById('btnCopy').addEventListener('click', copyClean);
+  document.getElementById('btnSaveTxt').addEventListener('click', saveToFile);
+  document.getElementById('btnSaveHtml').addEventListener('click', openSaveModal);
+  document.getElementById('btnClear').addEventListener('click', clearForm);
+
+  
+
+  // File Name Modal Window & HTML Exporter
+  function openSaveModal() {
+    var now = new Date();
+    var dStr = now.toISOString().slice(0, 10);
+    var defName = 'tprfn_radiogram_' + dStr + '.html';
+    var modal = document.getElementById('saveModalBackdrop');
+    var input = document.getElementById('saveModalFileName');
+    if (input) input.value = defName;
+    if (modal) modal.classList.add('active');
+    setTimeout(function() {
+      if (input) { input.focus(); input.select(); }
+    }, 50);
+  }
+
+  function closeSaveModal() {
+    var modal = document.getElementById('saveModalBackdrop');
+    if (modal) modal.classList.remove('active');
+  }
+
+  function executeSaveHTML() {
+    var input = document.getElementById('saveModalFileName');
+    var chosenName = input ? input.value.trim() : '';
+    if (!chosenName) return;
+    if (!chosenName.toLowerCase().endsWith('.html') && !chosenName.toLowerCase().endsWith('.htm')) {
+      chosenName += '.html';
+    }
+    closeSaveModal();
+
+    document.querySelectorAll('input[type="text"]').forEach(function(el) { el.setAttribute('value', el.value); });
+    document.querySelectorAll('input[type="checkbox"], input[type="radio"]').forEach(function(el) {
+      if (el.checked) el.setAttribute('checked', 'checked');
+      else el.removeAttribute('checked');
+    });
+    document.querySelectorAll('textarea').forEach(function(el) { el.textContent = el.value; });
+    document.querySelectorAll('select').forEach(function(el) {
+      Array.from(el.options).forEach(function(opt) {
+        if (opt.value === el.value) opt.setAttribute('selected', 'selected');
+        else opt.removeAttribute('selected');
+      });
+    });
+    
+    var pre = document.getElementById('ascii-report') || document.getElementById('outputPre') || document.getElementById('preview') || document.getElementById('outputArea');
+    if (pre) pre.textContent = pre.textContent;
+
+    var clonedDoc = document.documentElement.cloneNode(true);
+    var modalInClone = clonedDoc.querySelector('#saveModalBackdrop');
+    if (modalInClone) modalInClone.classList.remove('active');
+
+    var htmlContent = '<!DOCTYPE html>\n' + clonedDoc.outerHTML;
+    var blob = new Blob([htmlContent], { type: 'text/html;charset=utf-8' });
+    var url = URL.createObjectURL(blob);
+    var a = document.createElement('a');
+    a.href = url;
+    a.download = chosenName;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  }
+
+  window.addEventListener('DOMContentLoaded', function() {
+    var cancelBtn = document.getElementById('saveModalCancelBtn');
+    var confirmBtn = document.getElementById('saveModalSaveBtn');
+    var modalInput = document.getElementById('saveModalFileName');
+    var modalBackdrop = document.getElementById('saveModalBackdrop');
+
+    if (cancelBtn) cancelBtn.addEventListener('click', closeSaveModal);
+    if (confirmBtn) confirmBtn.addEventListener('click', executeSaveHTML);
+    if (modalInput) {
+      modalInput.addEventListener('keydown', function(e) {
+        if (e.key === 'Enter') { e.preventDefault(); executeSaveHTML(); }
+        if (e.key === 'Escape') { e.preventDefault(); closeSaveModal(); }
+      });
+    }
+    if (modalBackdrop) {
+      modalBackdrop.addEventListener('click', function(e) {
+        if (e.target === modalBackdrop) closeSaveModal();
+      });
+    }
+
+    var btnSaveMain = document.getElementById('btnSaveHtml');
+    if (btnSaveMain) {
+      // Clear existing inline handlers just in case
+      btnSaveMain.onclick = null;
+      btnSaveMain.addEventListener('click', openSaveModal);
+    }
+  });
+
+</script>
+
+  
+
+
+  <!-- Custom File Name Modal Window -->
+  <div id="saveModalBackdrop" class="save-modal-backdrop">
+    <div class="save-modal-window">
+      <h3>Save Form as HTML</h3>
+      <p>Enter a name for the saved offline HTML file:</p>
+      <input type="text" id="saveModalFileName" spellcheck="false">
+      <div class="save-modal-actions">
+        <button type="button" class="save-modal-btn save-modal-btn-cancel" id="saveModalCancelBtn">Cancel</button>
+        <button type="button" class="save-modal-btn save-modal-btn-confirm" id="saveModalSaveBtn">Save File</button>
+      </div>
+    </div>
+  </div>
+
+</body>
+</html>
