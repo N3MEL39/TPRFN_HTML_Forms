@@ -1,0 +1,323 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>ICS 214 - Activity Log (Packet Radio)</title>
+  <style>
+    * { box-sizing: border-box; }
+    body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, monospace; background: #fdfaf6; color: #222; padding: 20px; margin: 0; }
+    .container { max-width: 880px; margin: 0 auto; background: #fff; padding: 24px; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+    .header { background: #b25900; color: white; padding: 12px; border-radius: 6px; text-align: center; margin-bottom: 18px; }
+    .header h2 { margin: 0; font-size: 1.3rem; letter-spacing: 1px; }
+    .header p { margin: 4px 0 0 0; font-size: 0.85rem; opacity: 0.9; }
+    fieldset { border: 1px solid #fed8b1; border-radius: 6px; padding: 14px; margin-bottom: 14px; background: #fffdf9; }
+    legend { font-weight: bold; padding: 0 8px; font-size: 0.85rem; color: #803d00; }
+    .row { display: flex; flex-wrap: wrap; gap: 12px; margin-bottom: 10px; }
+    .col { flex: 1; min-width: 140px; display: flex; flex-direction: column; }
+    .label-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px; }
+    label { font-size: 0.8rem; font-weight: 600; color: #333; }
+    input[type="text"], textarea { padding: 7px 8px; font-size: 0.9rem; border: 1px solid #999; border-radius: 4px; font-family: inherit; width: 100%; }
+    .btn-now { background: #555; color: #fff; padding: 4px 8px; font-size: 0.72rem; border-radius: 4px; border: none; cursor: pointer; }
+    .btn-now:hover { background: #333; }
+    .actions { display: flex; gap: 10px; margin: 18px 0; }
+    button.main-btn { flex: 1; padding: 12px; font-size: 0.95rem; font-weight: bold; border: none; border-radius: 6px; cursor: pointer; }
+    .btn-generate { background: #b25900; color: #fff; }
+    .btn-generate:hover { background: #803d00; }
+    .btn-copy { background: #2e7d32; color: #fff; }
+    .btn-copy:hover { background: #1b5e20; }
+    .btn-clear { background: #c62828; color: #fff; flex: 0.4; }
+    pre { background: #181c20; color: #39ff14; padding: 14px; border-radius: 6px; overflow-x: auto; font-family: "Courier New", Courier, monospace; font-size: 0.85rem; line-height: 1.35; min-height: 150px; }
+    .log-entry { display: flex; gap: 10px; margin-bottom: 8px; align-items: center; }
+    .log-time { width: 110px !important; }
+    .log-desc { flex: 1; }
+    .nav-bar { margin-bottom: 12px; font-size: 0.85rem; }
+    .nav-bar a { color: #b25900; text-decoration: none; font-weight: bold; }
+    .save-modal-backdrop { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.55); z-index: 99999; justify-content: center; align-items: center; }
+    .save-modal-backdrop.active { display: flex; }
+    .save-modal-window { background: #ffffff; padding: 24px 28px; border-radius: 10px; width: 92%; max-width: 480px; box-shadow: 0 10px 30px rgba(0,0,0,0.3); border: 1px solid #cbd5e1; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
+    .save-modal-window h3 { margin: 0 0 8px 0; font-size: 1.25rem; color: #1e293b; font-weight: bold; }
+    .save-modal-window p { margin: 0 0 16px 0; font-size: 0.88rem; color: #64748b; line-height: 1.4; }
+    .save-modal-window input[type="text"] { width: 100%; padding: 10px 12px; font-size: 0.95rem; border: 2px solid #94a3b8; border-radius: 6px; margin-bottom: 20px; font-family: inherit; box-sizing: border-box; text-transform: none; }
+    .save-modal-window input[type="text"]:focus { border-color: #2563eb; outline: none; }
+    .save-modal-actions { display: flex; gap: 10px; justify-content: flex-end; }
+    .save-modal-btn { padding: 9px 18px; font-size: 0.9rem; font-weight: bold; border-radius: 6px; border: none; cursor: pointer; }
+    .save-modal-btn-confirm { background: #2563eb; color: #ffffff; }
+    .save-modal-btn-confirm:hover { background: #1d4ed8; }
+    .save-modal-btn-cancel { background: #e2e8f0; color: #334155; }
+    .save-modal-btn-cancel:hover { background: #cbd5e1; }
+  </style>
+</head>
+<body>
+<div class="container">
+  <div class="nav-bar"><a href="../index.html">&larr; Back to Packet Forms Hub</a></div>
+  <div class="header">
+    <h2>ICS 214 - ACTIVITY LOG</h2>
+    <p>Unit / Individual Station Activity Log (Packet ASCII)</p>
+  </div>
+
+  <form id="ics214Form" onsubmit="event.preventDefault(); return false;">
+    <fieldset>
+      <legend>INCIDENT & UNIT HEADER</legend>
+      <div class="row">
+        <div class="col" style="flex: 2;"><label for="incName">1. Incident Name</label><input type="text" id="incName"></div>
+        <div class="col"><label for="opPeriod">2. Operational Period</label><input type="text" id="opPeriod" placeholder="e.g. OP-1 0700-1900"></div>
+      </div>
+      <div class="row">
+        <div class="col"><label for="stationCall">3. Name / Station Callsign</label><input type="text" id="stationCall"></div>
+        <div class="col"><label for="icsPos">4. ICS Position / Tactical</label><input type="text" id="icsPos" placeholder="e.g. STAGING COMM / SHELTER NET"></div>
+        <div class="col"><label for="agency">5. Agency / Home Org</label><input type="text" id="agency" placeholder="ARES / OEM"></div>
+      </div>
+    </fieldset>
+
+    <fieldset>
+      <legend>6. LOG ENTRIES (Time UTC & Major Event / Notable Activity)</legend>
+      <div id="logEntries">
+        <div class="log-entry"><input type="text" class="log-time" placeholder="TIME (UTC)"><input type="text" class="log-desc" placeholder="Notable event / activity summary..."></div>
+        <div class="log-entry"><input type="text" class="log-time" placeholder="TIME (UTC)"><input type="text" class="log-desc" placeholder="Notable event / activity summary..."></div>
+        <div class="log-entry"><input type="text" class="log-time" placeholder="TIME (UTC)"><input type="text" class="log-desc" placeholder="Notable event / activity summary..."></div>
+        <div class="log-entry"><input type="text" class="log-time" placeholder="TIME (UTC)"><input type="text" class="log-desc" placeholder="Notable event / activity summary..."></div>
+        <div class="log-entry"><input type="text" class="log-time" placeholder="TIME (UTC)"><input type="text" class="log-desc" placeholder="Notable event / activity summary..."></div>
+      </div>
+      <button type="button" class="btn-now" id="btnAddRow" style="margin-top: 6px; padding: 6px 12px; font-size: 0.8rem;">+ Add Log Entry Row</button>
+    </fieldset>
+
+    <fieldset>
+      <legend>7. PREPARED BY</legend>
+      <div class="row">
+        <div class="col"><label for="prepName">Prepared By (Name & Title)</label><input type="text" id="prepName"></div>
+        <div class="col">
+          <div class="label-row">
+            <label for="prepDateTime">Date / Time Prepared</label>
+            <button type="button" class="btn-now" id="btn214Now">Current UTC</button>
+          </div>
+          <input type="text" id="prepDateTime">
+        </div>
+      </div>
+    </fieldset>
+
+    <div class="actions">
+      <button type="button" class="main-btn btn-generate" id="btnGen">Generate Packet ASCII</button>
+      <button type="button" class="main-btn btn-save" id="btnSaveHtml" style="background:#5c6bc0; color:#fff;">Save as HTML</button>
+      <button type="button" class="main-btn btn-copy" id="btnCopy">Copy ASCII</button>
+      <button type="button" class="main-btn btn-clear" id="btnClear">Reset</button>
+    </div>
+  </form>
+
+  <label style="font-weight:bold;">Formatted ASCII for Packet / BBS Transmission:</label>
+  <pre id="outputPre">Fill in the fields above and click "Generate Packet ASCII"...</pre>
+</div>
+
+  <!-- Custom File Name Modal Window -->
+  <div id="saveModalBackdrop" class="save-modal-backdrop">
+    <div class="save-modal-window">
+      <h3>Save Form as HTML</h3>
+      <p>Enter a name for the saved offline HTML file:</p>
+      <input type="text" id="saveModalFileName" spellcheck="false">
+      <div class="save-modal-actions">
+        <button type="button" class="save-modal-btn save-modal-btn-cancel" id="saveModalCancelBtn">Cancel</button>
+        <button type="button" class="save-modal-btn save-modal-btn-confirm" id="saveModalSaveBtn">Save File</button>
+      </div>
+    </div>
+  </div>
+
+<script>
+  function addLogRow() {
+    const container = document.getElementById('logEntries');
+    const div = document.createElement('div');
+    div.className = 'log-entry';
+    div.innerHTML = '<input type="text" class="log-time" placeholder="TIME (UTC)"><input type="text" class="log-desc" placeholder="Notable event / activity summary...">';
+    container.appendChild(div);
+  }
+
+  function setUTC() {
+    const now = new Date();
+    const y = now.getUTCFullYear();
+    const m = String(now.getUTCMonth()+1).padStart(2,'0');
+    const d = String(now.getUTCDate()).padStart(2,'0');
+    const hh = String(now.getUTCHours()).padStart(2,'0');
+    const mm = String(now.getUTCMinutes()).padStart(2,'0');
+    document.getElementById('prepDateTime').value = y + '-' + m + '-' + d + ' ' + hh + ':' + mm + 'Z';
+  }
+
+  function clean(id) {
+    const el = document.getElementById(id);
+    return el ? (el.value || '').trim() : '';
+  }
+
+  function pad(str, len) {
+    str = (str || '').toString();
+    return str + ' '.repeat(Math.max(0, len - str.length));
+  }
+
+  function generateASCII() {
+    try {
+      const div = '='.repeat(74);
+      const sub = '-'.repeat(74);
+      const inc = clean('incName') || 'N/A';
+      const op = clean('opPeriod') || 'N/A';
+      const call = clean('stationCall') || 'N/A';
+      const pos = clean('icsPos') || 'N/A';
+      const ag = clean('agency') || 'N/A';
+      const prep = clean('prepName') || 'N/A';
+      const prepDT = clean('prepDateTime') || 'N/A';
+
+      let entries = [];
+      const rows = document.querySelectorAll('.log-entry');
+      rows.forEach(function(r) {
+        const t = (r.querySelector('.log-time').value || '').trim();
+        const d = (r.querySelector('.log-desc').value || '').trim();
+        if (t || d) {
+          entries.push(pad(t, 8) + ' | ' + d);
+        }
+      });
+
+      if (entries.length === 0) entries.push('  NO LOG ENTRIES RECORDED');
+
+      const out = div + '\n' +
+        'ICS 214 - ACTIVITY LOG (PACKET ASCII)\n' +
+        div + '\n' +
+        pad('INCIDENT NAME', 16) + ' : ' + inc + '\n' +
+        pad('OP PERIOD', 16) + ' : ' + op + '\n' +
+        pad('NAME / CALL', 16) + ' : ' + call + '\n' +
+        pad('ICS POSITION', 16) + ' : ' + pos + '\n' +
+        pad('AGENCY / ORG', 16) + ' : ' + ag + '\n' +
+        sub + '\n' +
+        'TIME (Z) | MAJOR ACTIVITIES & EVENTS\n' +
+        sub + '\n' +
+        entries.join('\n') + '\n' +
+        sub + '\n' +
+        pad('PREPARED BY', 16) + ' : ' + prep + '\n' +
+        pad('DATE/TIME', 16) + ' : ' + prepDT + '\n' +
+        div;
+
+      document.getElementById('outputPre').textContent = out;
+    } catch(err) {
+      alert("Error generating text: " + err.message);
+    }
+  }
+
+  function copyASCII() {
+    const txt = document.getElementById('outputPre').textContent;
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(txt).then(function() {
+        alert("Activity Log copied to clipboard!");
+      }).catch(function() {
+        fallbackCopy();
+      });
+    } else {
+      fallbackCopy();
+    }
+  }
+
+  function fallbackCopy() {
+    const pre = document.getElementById('outputPre');
+    const range = document.createRange();
+    range.selectNode(pre);
+    window.getSelection().removeAllRanges();
+    window.getSelection().addRange(range);
+    document.execCommand('copy');
+    alert("Copied to clipboard!");
+  }
+
+  function clearForm() {
+    if(confirm("Reset form?")) {
+      document.getElementById('ics214Form').reset();
+      document.getElementById('outputPre').textContent = 'Fill in the fields above and click "Generate Packet ASCII"...';
+    }
+  }
+
+  document.getElementById('btnAddRow').addEventListener('click', addLogRow);
+  document.getElementById('btn214Now').addEventListener('click', setUTC);
+  document.getElementById('btnGen').addEventListener('click', generateASCII);
+  document.getElementById('btnCopy').addEventListener('click', copyASCII);
+  document.getElementById('btnClear').addEventListener('click', clearForm);
+
+  // File Name Modal Window & HTML Exporter
+  function openSaveModal() {
+    var now = new Date();
+    var dStr = now.toISOString().slice(0, 10);
+    var defName = 'ics_214_' + dStr + '.html';
+    var modal = document.getElementById('saveModalBackdrop');
+    var input = document.getElementById('saveModalFileName');
+    if (input) input.value = defName;
+    if (modal) modal.classList.add('active');
+    setTimeout(function() {
+      if (input) { input.focus(); input.select(); }
+    }, 50);
+  }
+
+  function closeSaveModal() {
+    var modal = document.getElementById('saveModalBackdrop');
+    if (modal) modal.classList.remove('active');
+  }
+
+  function executeSaveHTML() {
+    var input = document.getElementById('saveModalFileName');
+    var chosenName = input ? input.value.trim() : '';
+    if (!chosenName) return;
+    if (!chosenName.toLowerCase().endsWith('.html') && !chosenName.toLowerCase().endsWith('.htm')) {
+      chosenName += '.html';
+    }
+    closeSaveModal();
+
+    document.querySelectorAll('input[type="text"]').forEach(function(el) { el.setAttribute('value', el.value); });
+    document.querySelectorAll('input[type="checkbox"], input[type="radio"]').forEach(function(el) {
+      if (el.checked) el.setAttribute('checked', 'checked');
+      else el.removeAttribute('checked');
+    });
+    document.querySelectorAll('textarea').forEach(function(el) { el.textContent = el.value; });
+    document.querySelectorAll('select').forEach(function(el) {
+      Array.from(el.options).forEach(function(opt) {
+        if (opt.value === el.value) opt.setAttribute('selected', 'selected');
+        else opt.removeAttribute('selected');
+      });
+    });
+    
+    var pre = document.getElementById('ascii-report') || document.getElementById('outputPre') || document.getElementById('preview') || document.getElementById('outputArea');
+    if (pre) pre.textContent = pre.textContent;
+
+    var clonedDoc = document.documentElement.cloneNode(true);
+    var modalInClone = clonedDoc.querySelector('#saveModalBackdrop');
+    if (modalInClone) modalInClone.classList.remove('active');
+
+    var htmlContent = '<!DOCTYPE html>\n' + clonedDoc.outerHTML;
+    var blob = new Blob([htmlContent], { type: 'text/html;charset=utf-8' });
+    var url = URL.createObjectURL(blob);
+    var a = document.createElement('a');
+    a.href = url;
+    a.download = chosenName;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  }
+
+  window.addEventListener('DOMContentLoaded', function() {
+    var cancelBtn = document.getElementById('saveModalCancelBtn');
+    var confirmBtn = document.getElementById('saveModalSaveBtn');
+    var modalInput = document.getElementById('saveModalFileName');
+    var modalBackdrop = document.getElementById('saveModalBackdrop');
+
+    if (cancelBtn) cancelBtn.addEventListener('click', closeSaveModal);
+    if (confirmBtn) confirmBtn.addEventListener('click', executeSaveHTML);
+    if (modalInput) {
+      modalInput.addEventListener('keydown', function(e) {
+        if (e.key === 'Enter') { e.preventDefault(); executeSaveHTML(); }
+        if (e.key === 'Escape') { e.preventDefault(); closeSaveModal(); }
+      });
+    }
+    if (modalBackdrop) {
+      modalBackdrop.addEventListener('click', function(e) {
+        if (e.target === modalBackdrop) closeSaveModal();
+      });
+    }
+
+    var btnSaveMain = document.getElementById('btnSaveHtml');
+    if (btnSaveMain) {
+      btnSaveMain.addEventListener('click', openSaveModal);
+    }
+  });
+
+</script>
+</body>
+</html>
