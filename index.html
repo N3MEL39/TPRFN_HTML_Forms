@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Packet Radio Emergency Communications Forms Suite</title>
+  <style>
+    * { box-sizing: border-box; }
+    body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background: #eef2f6; margin: 0; padding: 30px 20px; color: #1e293b; }
+    .hub-container { max-width: 1040px; margin: 0 auto; background: white; border-radius: 12px; padding: 32px; box-shadow: 0 4px 16px rgba(0,0,0,0.08); }
+    h1 { margin-top: 0; color: #0f172a; font-size: 1.85rem; border-bottom: 2px solid #e2e8f0; padding-bottom: 12px; }
+    p.subtitle { color: #64748b; margin-top: -6px; margin-bottom: 24px; font-size: 0.95rem; }
+    
+    .folder-section { margin-bottom: 30px; border: 1px solid #e2e8f0; border-radius: 10px; padding: 20px; background: #f8fafc; }
+    .folder-header { display: flex; align-items: center; gap: 10px; margin-bottom: 14px; border-bottom: 2px solid #cbd5e1; padding-bottom: 8px; }
+    .folder-icon { font-size: 1.4rem; }
+    .folder-title { font-size: 1.25rem; font-weight: bold; color: #1e293b; margin: 0; }
+    .folder-desc { font-size: 0.85rem; color: #64748b; margin: 0; margin-left: auto; }
+    
+    .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(290px, 1fr)); gap: 14px; }
+    .card { border: 1px solid #e2e8f0; border-radius: 8px; padding: 16px; text-decoration: none; color: inherit; transition: transform 0.15s, border-color 0.15s, box-shadow 0.15s; display: flex; flex-direction: column; justify-content: space-between; background: #fff; }
+    .card:hover { transform: translateY(-2px); box-shadow: 0 6px 12px rgba(0,0,0,0.08); border-color: #3b82f6; }
+    
+    .badge { display: inline-block; padding: 3px 8px; border-radius: 4px; font-size: 0.72rem; font-weight: bold; text-transform: uppercase; margin-bottom: 8px; }
+    .badge-gen { background: #dcfce7; color: #15803d; }
+    .badge-rri { background: #e8f5e9; color: #2e7d32; }
+    .badge-arrl { background: #fef3c7; color: #b45309; }
+    .badge-ics { background: #dbeafe; color: #1d4ed8; }
+    .badge-wx { background: #e0f2fe; color: #0284c7; }
+    .badge-hurr { background: #e1f5fe; color: #01579b; }
+    .badge-sev { background: #ffedea; color: #d84315; }
+    .badge-sky { background: #e0f7fa; color: #006064; }
+    
+    .card h3 { margin: 0 0 6px 0; font-size: 1.05rem; color: #1e293b; }
+    .card p { margin: 0; font-size: 0.82rem; color: #64748b; line-height: 1.4; }
+    .footer { margin-top: 25px; padding-top: 16px; border-top: 1px solid #e2e8f0; font-size: 0.8rem; color: #94a3b8; text-align: center; }
+  </style>
+</head>
+<body>
+<div class="hub-container">
+  <h1>Packet Radio Emergency Communications Forms Suite</h1>
+  <p class="subtitle">100% Offline-ready EmComm forms with ASCII generation, clipboard export, and "Save as HTML" for Packet Radio (AX.25, VARA FM, HF BBS).</p>
+
+  <!-- FOLDER: General Forms -->
+  <div class="folder-section">
+    <div class="folder-header">
+      <span class="folder-icon">📁</span>
+      <h2 class="folder-title">General Forms</h2>
+      <span class="folder-desc">Location: <code>general/</code></span>
+    </div>
+    <div class="grid">
+      <a href="general/winlink_checkin.html" class="card">
+        <div>
+          <span class="badge badge-gen">Winlink General</span>
+          <h3>Winlink Check-In</h3>
+          <p>Official check-in form with Service (Amateur/SHARES), Band, Mode (AX.25, VARA, Telnet), MGRS, GPS, and SitRep notes.</p>
+        </div>
+      </a>
+
+      <a href="general/net_checkin.html" class="card">
+        <div>
+          <span class="badge badge-gen">Net Control</span>
+          <h3>Net Check-In & Roster</h3>
+          <p>NCS roll-call roster to log multiple arriving stations in sequence with timestamps, power sources, and traffic count.</p>
+        </div>
+      </a>
+
+      <a href="general/general_bulletin.html" class="card">
+        <div>
+          <span class="badge badge-gen">BBS Broadcast</span>
+          <h3>Simple Bulletin</h3>
+          <p>Official Winlink bulletin template for all-stations advisories, operational warnings, and packet BBS broadcast routing.</p>
+        </div>
+      </a>
+
+      <a href="general/fsr.html" class="card">
+        <div>
+          <span class="badge badge-gen">Lifelines</span>
+          <h3>Field Situation Report (FSR)</h3>
+          <p>Full 13-point assessment of POTS, VoIP, cell voice/text, power, water, gas, and NOAA radio with life-safety flags.</p>
+        </div>
+      </a>
+
+      <a href="general/tprfn_radiogram.html" class="card">
+        <div>
+          <span class="badge badge-rri">TPRFN / RRI</span>
+          <h3>RRI / TPRFN Radiogram</h3>
+          <p>NTS digital bench generator with automated text cleaning (dots to X, dash, atsign, dot com), ST routing, and /EX ending.</p>
+        </div>
+      </a>
+
+      <a href="general/welfare_radiogram.html" class="card">
+        <div>
+          <span class="badge badge-arrl">ARRL / NTS</span>
+          <h3>Health & Welfare Radiogram</h3>
+          <p>Standardized 25-word welfare radiogram form with automated word count check and exact-width packet ASCII layout.</p>
+        </div>
+      </a>
+    </div>
+  </div>
+
+  <!-- FOLDER: ICS Forms -->
+  <div class="folder-section">
+    <div class="folder-header">
+      <span class="folder-icon">📁</span>
+      <h2 class="folder-title">ICS Forms</h2>
+      <span class="folder-desc">Location: <code>ics/</code></span>
+    </div>
+    <div class="grid">
+      <a href="ics/ics_213.html" class="card">
+        <div>
+          <span class="badge badge-ics">ICS 213</span>
+          <h3>General Message</h3>
+          <p>Standard Incident Command System message form for operational instructions, official requests, and recipient replies.</p>
+        </div>
+      </a>
+
+      <a href="ics/ics_205.html" class="card">
+        <div>
+          <span class="badge badge-ics">ICS 205</span>
+          <h3>Radio Communications Plan</h3>
+          <p>Incident frequency assignment matrix with channels, RX/TX frequencies, CTCSS tones, modes, and tactical functions.</p>
+        </div>
+      </a>
+
+      <a href="ics/ics_214.html" class="card">
+        <div>
+          <span class="badge badge-ics">ICS 214</span>
+          <h3>Activity Log</h3>
+          <p>Unit and station log for recording time-stamped operational events, messages handled, and notable deployment changes.</p>
+        </div>
+      </a>
+
+      <a href="ics/incident_status.html" class="card">
+        <div>
+          <span class="badge badge-ics">EOC Status</span>
+          <h3>Incident Status Report</h3>
+          <p>16-field EOC operations overview covering WebEOC, multi-hazard types, EOC staffing, disaster declarations, casualties, and shelters.</p>
+        </div>
+      </a>
+
+      <a href="ics/damage_assessment.html" class="card">
+        <div>
+          <span class="badge badge-ics">Damage Survey</span>
+          <h3>Initial Damage Assessment</h3>
+          <p>Windshield survey with automated structure tally across 12 categories (affected, minor, major, totaled) and estimated dollar losses.</p>
+        </div>
+      </a>
+    </div>
+  </div>
+
+  <!-- FOLDER: Weather Forms -->
+  <div class="folder-section">
+    <div class="folder-header">
+      <span class="folder-icon">📁</span>
+      <h2 class="folder-title">Weather Forms</h2>
+      <span class="folder-desc">Location: <code>weather/</code></span>
+    </div>
+    <div class="grid">
+      <a href="weather/tprfn_skywarn.html" class="card">
+        <div>
+          <span class="badge badge-sky">TPRFN Skywarn</span>
+          <h3>TPRFN Skywarn Winlink Generator</h3>
+          <p>Dedicated Skywarn spotter report generator with NWS office presets (PHI, CTP, LWX, OUN, etc.), changeover reports, and remarks.</p>
+        </div>
+      </a>
+
+      <a href="weather/local_weather.html" class="card">
+        <div>
+          <span class="badge badge-wx">Surface Obs</span>
+          <h3>Current Local Weather</h3>
+          <p>Surface weather observation report covering sky cover, precipitation, temperature, humidity, barometer trend, wind gusts, and NWS alerts.</p>
+        </div>
+      </a>
+
+      <a href="weather/severe_wx.html" class="card">
+        <div>
+          <span class="badge badge-sev">SKYWARN</span>
+          <h3>Severe Weather Report</h3>
+          <p>Severe weather spotter report for reporting flooding, hail size, high wind gusts, tornado/funnel clouds, and winter precipitation.</p>
+        </div>
+      </a>
+
+      <a href="weather/hurricane_report.html" class="card">
+        <div>
+          <span class="badge badge-hurr">NHC / WX4NHC</span>
+          <h3>Hurricane Report</h3>
+          <p>Dedicated tropical cyclone report formatted for the National Hurricane Center and Hurricane Watch Net with storm surge and damage notes.</p>
+        </div>
+      </a>
+    </div>
+  </div>
+
+  <div class="footer">
+    Self-contained HTML5 &bull; 100% Offline Capable &bull; Clean Folder Architecture (General, ICS, Weather) for Toughbooks &amp; Field Stations.
+  </div>
+</div>
+</body>
+</html>
