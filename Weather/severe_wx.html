@@ -1,0 +1,462 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Severe Weather Report (Packet Radio)</title>
+  <style>
+
+    * { box-sizing: border-box; }
+    body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, monospace; background: #eef2f7; color: #222; padding: 20px; margin: 0; }
+    .container { max-width: 960px; margin: 0 auto; background: #fff; padding: 24px; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+    .header { padding: 12px; border-radius: 6px; text-align: center; margin-bottom: 18px; color: white; }
+    .header h2 { margin: 0; font-size: 1.3rem; letter-spacing: 1px; }
+    .header p { margin: 4px 0 0 0; font-size: 0.85rem; opacity: 0.9; }
+    fieldset { border: 1px solid #cbd5e1; border-radius: 6px; padding: 14px; margin-bottom: 14px; background: #fafcff; }
+    legend { font-weight: bold; padding: 0 8px; font-size: 0.85rem; }
+    .row { display: flex; flex-wrap: wrap; gap: 12px; margin-bottom: 10px; }
+    .col { flex: 1; min-width: 140px; display: flex; flex-direction: column; }
+    .label-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px; }
+    label { font-size: 0.8rem; font-weight: 600; color: #333; }
+    input[type="text"], select, textarea { padding: 7px 8px; font-size: 0.88rem; border: 1px solid #999; border-radius: 4px; font-family: inherit; width: 100%; }
+    textarea { resize: vertical; min-height: 60px; }
+    .btn-now { background: #4a5568; color: #fff; padding: 4px 8px; font-size: 0.72rem; border-radius: 4px; border: none; cursor: pointer; }
+    .btn-now:hover { background: #2d3748; }
+    .actions { display: flex; gap: 10px; margin: 18px 0; }
+    button.main-btn { flex: 1; padding: 12px; font-size: 0.95rem; font-weight: bold; border: none; border-radius: 6px; cursor: pointer; color: #fff; }
+    .btn-save { background: #5c6bc0; }
+    .btn-save:hover { background: #3f51b5; }
+    .btn-copy { background: #2e7d32; }
+    .btn-copy:hover { background: #1b5e20; }
+    .btn-clear { background: #c62828; flex: 0.35; }
+    .btn-clear:hover { background: #8e0000; }
+    pre { background: #181c20; color: #39ff14; padding: 14px; border-radius: 6px; overflow-x: auto; font-family: "Courier New", Courier, monospace; font-size: 0.82rem; line-height: 1.32; min-height: 140px; }
+    .nav-bar { margin-bottom: 12px; font-size: 0.85rem; }
+    .nav-bar a { text-decoration: none; font-weight: bold; }
+
+    /* Modal Save Dialog Window */
+    .save-modal-backdrop {
+      display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+      background: rgba(0,0,0,0.55); z-index: 99999; justify-content: center; align-items: center;
+    }
+    .save-modal-backdrop.active { display: flex; }
+    .save-modal-window {
+      background: #ffffff; padding: 24px 28px; border-radius: 10px; width: 92%; max-width: 480px;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.3); border: 1px solid #cbd5e1; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    }
+    .save-modal-window h3 { margin: 0 0 8px 0; font-size: 1.25rem; color: #1e293b; font-weight: bold; }
+    .save-modal-window p { margin: 0 0 16px 0; font-size: 0.88rem; color: #64748b; line-height: 1.4; }
+    .save-modal-window input[type="text"] {
+      width: 100%; padding: 10px 12px; font-size: 0.95rem; border: 2px solid #94a3b8; border-radius: 6px;
+      margin-bottom: 20px; font-family: inherit; box-sizing: border-box; text-transform: none;
+    }
+    .save-modal-window input[type="text"]:focus { border-color: #2563eb; outline: none; }
+    .save-modal-actions { display: flex; gap: 10px; justify-content: flex-end; }
+    .save-modal-btn { padding: 9px 18px; font-size: 0.9rem; font-weight: bold; border-radius: 6px; border: none; cursor: pointer; }
+    .save-modal-btn-confirm { background: #2563eb; color: #ffffff; }
+    .save-modal-btn-confirm:hover { background: #1d4ed8; }
+    .save-modal-btn-cancel { background: #e2e8f0; color: #334155; }
+    .save-modal-btn-cancel:hover { background: #cbd5e1; }
+
+    .header { background: #d84315; }
+    legend { color: #bf360c; }
+    .nav-bar a { color: #d84315; }
+    .btn-generate { background: #d84315; }
+    .btn-generate:hover { background: #bf360c; }
+  </style>
+</head>
+<body>
+<div class="container">
+  <div class="nav-bar"><a href="../index.html">&larr; Back to Packet Forms Hub</a></div>
+  <div class="header">
+    <h2>SEVERE WEATHER REPORT (SKYWARN / NWS)</h2>
+    <p>Severe Convective, Wind, Hail, Flood & Winter Weather Spotter Report (Packet ASCII)</p>
+  </div>
+
+  <form id="sevWxForm" onsubmit="event.preventDefault(); return false;">
+    <fieldset>
+      <legend>1-6. REPORT HEADER & SPOTTER INFO</legend>
+      <div class="row">
+        <div class="col" style="max-width: 140px;"><label for="call">1. Sender Callsign</label><input type="text" id="call" placeholder="N0CALL"></div>
+        <div class="col">
+          <div class="label-row">
+            <label for="dtEvent">2. Event Date / Time (UTC)</label>
+            <button type="button" class="btn-now" id="btnDateNow">Current UTC</button>
+          </div>
+          <input type="text" id="dtEvent" placeholder="YYYY-MM-DD HHMMZ">
+        </div>
+        <div class="col" style="max-width: 170px;">
+          <label for="repVersion">3. Report Version</label>
+          <select id="repVersion">
+            <option value="First Report" selected>First Report</option>
+            <option value="Update Report">Update Report</option>
+            <option value="Final Report">Final Report</option>
+          </select>
+        </div>
+      </div>
+      <div class="row">
+        <div class="col"><label for="repName">4. Reporting Party Name</label><input type="text" id="repName"></div>
+        <div class="col"><label for="phone">5. Phone Number</label><input type="text" id="phone"></div>
+        <div class="col"><label for="email">6. Email / Winlink</label><input type="text" id="email"></div>
+      </div>
+    </fieldset>
+
+    <fieldset>
+      <legend>7-14. EVENT LOCATION & COORDINATES</legend>
+      <div class="row">
+        <div class="col"><label for="city">7. City</label><input type="text" id="city"></div>
+        <div class="col"><label for="region">8. State / Region</label><input type="text" id="region"></div>
+        <div class="col"><label for="county">9. County</label><input type="text" id="county"></div>
+        <div class="col"><label for="otherGeo">10. Other Geographic Info</label><input type="text" id="otherGeo" placeholder="Landmarks, highway milepost"></div>
+      </div>
+      <div class="row">
+        <div class="col"><label for="lat">11. Latitude</label><input type="text" id="lat" placeholder="30.2672"></div>
+        <div class="col"><label for="lon">12. Longitude</label><input type="text" id="lon" placeholder="-97.7431"></div>
+        <div class="col"><label for="mgrs">13. MGRS</label><input type="text" id="mgrs"></div>
+        <div class="col" style="max-width: 120px;"><label for="grid">14. Grid</label><input type="text" id="grid" placeholder="EM10dj"></div>
+      </div>
+    </fieldset>
+
+    <fieldset>
+      <legend>15-24. OBSERVED SEVERE CONDITIONS</legend>
+      <div class="row">
+        <div class="col" style="max-width: 170px;">
+          <label for="unitChoice">Measurement Units</label>
+          <select id="unitChoice">
+            <option value="Imperial" selected>Imperial (mph, in)</option>
+            <option value="Metric">Metric (km/h, mm)</option>
+          </select>
+        </div>
+        <div class="col">
+          <label for="flood">15. Flooding</label>
+          <select id="flood">
+            <option value="None" selected>None</option>
+            <option value="Minor Street Flooding">Minor Street Flooding</option>
+            <option value="Low Water Crossing Flooded">Low Water Crossing Flooded</option>
+            <option value="Widespread Flooding">Widespread Flooding</option>
+            <option value="Home/Business Flooded">Home/Business Flooded</option>
+            <option value="Creek/Stream Out of Banks">Creek/Stream Out of Banks</option>
+            <option value="River Out of Banks">River Out of Banks</option>
+          </select>
+        </div>
+        <div class="col">
+          <label for="hail">16. Hail Size</label>
+          <select id="hail">
+            <option value="None" selected>None</option>
+            <option value="0.75 in (Penny)">0.75 in (Penny)</option>
+            <option value="0.88 in (Nickel)">0.88 in (Nickel)</option>
+            <option value="1.00 in (Quarter)">1.00 in (Quarter)</option>
+            <option value="1.25 in (Half Dollar)">1.25 in (Half Dollar)</option>
+            <option value="1.75 in (Golfball)">1.75 in (Golfball)</option>
+            <option value="2.50 in (Tennisball)">2.50 in (Tennisball)</option>
+            <option value="2.75 in (Baseball)">2.75 in (Baseball)</option>
+            <option value="4.00 in (Grapefruit)">4.00 in (Grapefruit)</option>
+          </select>
+        </div>
+      </div>
+      <div class="row">
+        <div class="col"><label for="windSpeed">17. High Wind Speed</label><input type="text" id="windSpeed" placeholder="e.g. 55 mph"></div>
+        <div class="col">
+          <label for="tornado">18. Tornado / Funnel Cloud</label>
+          <select id="tornado">
+            <option value="None" selected>None</option>
+            <option value="Wall Cloud">Wall Cloud</option>
+            <option value="Funnel Cloud">Funnel Cloud</option>
+            <option value="Tornado on Ground">Tornado on Ground</option>
+            <option value="Waterspout">Waterspout</option>
+          </select>
+        </div>
+        <div class="col">
+          <label for="windDmg">19. Wind Damage</label>
+          <select id="windDmg">
+            <option value="None" selected>None</option>
+            <option value="Small Tree Limbs Down">Small Tree Limbs Down</option>
+            <option value="Large Branches Down">Large Branches Down</option>
+            <option value="Trees Snapped or Uprooted">Trees Snapped or Uprooted</option>
+            <option value="Power Lines Down">Power Lines Down</option>
+            <option value="Roof / Structural Damage">Roof / Structural Damage</option>
+          </select>
+        </div>
+      </div>
+      <div class="row">
+        <div class="col">
+          <label for="precipType">20. Winter Precipitation Type</label>
+          <select id="precipType">
+            <option value="None" selected>None</option>
+            <option value="Snow">Snow</option>
+            <option value="Sleet">Sleet</option>
+            <option value="Freezing Rain">Freezing Rain</option>
+            <option value="Mixture">Mixture</option>
+          </select>
+        </div>
+        <div class="col"><label for="snowDepth">21. Snow Accumulation</label><input type="text" id="snowDepth" placeholder="e.g. 4.0 in"></div>
+        <div class="col"><label for="iceAcc">22. Freezing Rain Ice Acc.</label><input type="text" id="iceAcc" placeholder="e.g. 0.25 in"></div>
+        <div class="col"><label for="heavyRain">23. Heavy Rain Amount</label><input type="text" id="heavyRain" placeholder="e.g. 2.50 in"></div>
+        <div class="col"><label for="rainPeriod">24. Rain Time Period</label><input type="text" id="rainPeriod" placeholder="e.g. In 2 hours"></div>
+      </div>
+    </fieldset>
+
+    <fieldset>
+      <legend>25. ADDITIONAL INFORMATION / DAMAGE DESCRIPTIONS</legend>
+      <textarea id="comments" rows="3" placeholder="Damage specifics, road closures, structural impact, spotter direction from event..."></textarea>
+    </fieldset>
+
+    <div class="actions">
+      <button type="button" class="main-btn btn-generate" id="btnGen">Generate Packet ASCII</button>
+      <button type="button" class="main-btn btn-save" id="btnSaveHtml">Save as HTML</button>
+      <button type="button" class="main-btn btn-copy" id="btnCopy">Copy ASCII</button>
+      <button type="button" class="main-btn btn-clear" id="btnClear">Reset</button>
+    </div>
+  </form>
+
+  <label style="font-weight:bold;">Formatted ASCII for Packet / NWS Transmission:</label>
+  <pre id="outputPre">Fill in the fields above and click "Generate Packet ASCII"...</pre>
+</div>
+
+<!-- Custom File Name Modal Window -->
+
+<script>
+  function setUTC() {
+    var now = new Date();
+    var y = now.getUTCFullYear();
+    var m = String(now.getUTCMonth()+1).padStart(2,'0');
+    var d = String(now.getUTCDate()).padStart(2,'0');
+    var hh = String(now.getUTCHours()).padStart(2,'0');
+    var mm = String(now.getUTCMinutes()).padStart(2,'0');
+    document.getElementById('dtEvent').value = y + '-' + m + '-' + d + ' ' + hh + mm + 'Z';
+  }
+
+  function clean(id) {
+    var el = document.getElementById(id);
+    return el ? (el.value || '').trim() : '';
+  }
+
+  function pad(str, len) {
+    str = (str || '').toString();
+    return str + ' '.repeat(Math.max(0, len - str.length));
+  }
+
+  function wrapText(str, width) {
+    if (!str) return [];
+    var lines = [];
+    str.split('\n').forEach(function(paragraph) {
+      var words = paragraph.split(' ');
+      var cur = '';
+      words.forEach(function(w) {
+        if ((cur + (cur ? ' ' : '') + w).length <= width) {
+          cur += (cur ? ' ' : '') + w;
+        } else {
+          if (cur) lines.push(cur);
+          cur = w;
+        }
+      });
+      if (cur) lines.push(cur);
+    });
+    return lines;
+  }
+
+  function generateASCII() {
+    try {
+      var div = '='.repeat(78);
+      var sub = '-'.repeat(78);
+
+      var call = clean('call') || 'N0CALL';
+      var dt = clean('dtEvent') || 'N/A';
+      var ver = clean('repVersion');
+      var name = clean('repName') || 'N/A';
+      var phone = clean('phone') || 'N/A';
+      var email = clean('email') || 'N/A';
+
+      var city = clean('city');
+      var reg = clean('region');
+      var county = clean('county');
+      var other = clean('otherGeo');
+      var lat = clean('lat') || 'N/A';
+      var lon = clean('lon') || 'N/A';
+      var mgrs = clean('mgrs') || 'N/A';
+      var grid = clean('grid') || 'N/A';
+
+      var units = clean('unitChoice');
+      var flood = clean('flood');
+      var hail = clean('hail');
+      var wspd = clean('windSpeed') || 'NONE';
+      var tor = clean('tornado');
+      var wdmg = clean('windDmg');
+      var ptype = clean('precipType');
+      var snow = clean('snowDepth') || 'NONE';
+      var ice = clean('iceAcc') || 'NONE';
+      var rain = clean('heavyRain') || 'NONE';
+      var rperiod = clean('rainPeriod') || 'N/A';
+      var cmt = clean('comments') || 'NONE REPORTED';
+
+      var wrappedCmt = wrapText(cmt, 72).map(function(l){ return '  ' + l; }).join('\n');
+
+      var out = div + '\n' +
+        'SEVERE WEATHER SPOTTER REPORT (PACKET ASCII)\n' +
+        div + '\n' +
+        pad('SENDER', 16) + ' : ' + pad(call, 14) + ' DATE/TIME: ' + pad(dt, 20) + ' VERSION: ' + ver + '\n' +
+        pad('OBSERVER', 16) + ' : ' + pad(name, 22) + ' PHONE: ' + pad(phone, 16) + ' EMAIL: ' + email + '\n' +
+        sub + '\n' +
+        'EVENT LOCATION:\n' +
+        pad('AREA', 16) + ' : ' + (city ? city + ', ' : '') + reg + (county ? ' (' + county + ' CO)' : '') + (other ? ' [' + other + ']' : '') + '\n' +
+        pad('COORDS', 16) + ' : LAT: ' + pad(lat, 12) + ' LON: ' + pad(lon, 12) + ' MGRS: ' + pad(mgrs, 16) + ' GRID: ' + grid + '\n' +
+        sub + '\n' +
+        'SEVERE PHENOMENA (' + units + '):\n' +
+        pad('15. FLOODING', 21) + ' : ' + flood + '\n' +
+        pad('16. HAIL SIZE', 21) + ' : ' + hail + '\n' +
+        pad('17. WIND SPEED', 21) + ' : ' + wspd + '\n' +
+        pad('18. TORNADO/FUNNEL', 21) + ' : ' + tor + '\n' +
+        pad('19. WIND DAMAGE', 21) + ' : ' + wdmg + '\n' +
+        pad('20. WINTER PRECIP', 21) + ' : ' + ptype + ' (SNOW: ' + snow + ' | ICE ACC: ' + ice + ')\n' +
+        pad('23. HEAVY RAIN', 21) + ' : ' + rain + ' (' + rperiod + ')\n' +
+        sub + '\n' +
+        '25. ADDITIONAL COMMENTS & DAMAGE DESCRIPTIONS:\n' +
+        wrappedCmt + '\n' +
+        div;
+
+      document.getElementById('outputPre').textContent = out;
+    } catch(err) {
+      alert("Error generating text: " + err.message);
+    }
+  }
+
+  function copyASCII() {
+    var txt = document.getElementById('outputPre').textContent;
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(txt).then(function() {
+        alert("Severe Weather report copied to clipboard!");
+      }).catch(function() {
+        fallbackCopy();
+      });
+    } else {
+      fallbackCopy();
+    }
+  }
+
+  function fallbackCopy() {
+    var pre = document.getElementById('outputPre');
+    var range = document.createRange();
+    range.selectNode(pre);
+    window.getSelection().removeAllRanges();
+    window.getSelection().addRange(range);
+    document.execCommand('copy');
+    alert("Copied to clipboard!");
+  }
+
+  function clearForm() {
+    if(confirm("Reset Severe Weather form?")) {
+      document.getElementById('sevWxForm').reset();
+      document.getElementById('outputPre').textContent = 'Fill in the fields above and click "Generate Packet ASCII"...';
+    }
+  }
+
+  window.addEventListener('DOMContentLoaded', function() {
+    document.getElementById('btnDateNow').addEventListener('click', setUTC);
+    document.getElementById('btnGen').addEventListener('click', generateASCII);
+    document.getElementById('btnCopy').addEventListener('click', copyASCII);
+    document.getElementById('btnClear').addEventListener('click', clearForm);
+  });
+
+  // --- File Name Modal Window & HTML Exporter ---
+  function openSaveModal() {
+    var now = new Date();
+    var dStr = now.toISOString().slice(0, 10);
+    var defName = 'severe_wx_' + dStr + '.html';
+    var modal = document.getElementById('saveModalBackdrop');
+    var input = document.getElementById('saveModalFileName');
+    if (input) input.value = defName;
+    if (modal) modal.classList.add('active');
+    setTimeout(function() {
+      if (input) { input.focus(); input.select(); }
+    }, 50);
+  }
+
+  function closeSaveModal() {
+    var modal = document.getElementById('saveModalBackdrop');
+    if (modal) modal.classList.remove('active');
+  }
+
+  function executeSaveHTML() {
+    var input = document.getElementById('saveModalFileName');
+    var chosenName = input ? input.value.trim() : '';
+    if (!chosenName) return;
+    if (!chosenName.toLowerCase().endsWith('.html') && !chosenName.toLowerCase().endsWith('.htm')) {
+      chosenName += '.html';
+    }
+    closeSaveModal();
+
+    // Sync input values to DOM attributes so they save offline
+    document.querySelectorAll('input[type="text"]').forEach(function(el) { el.setAttribute('value', el.value); });
+    document.querySelectorAll('input[type="checkbox"], input[type="radio"]').forEach(function(el) {
+      if (el.checked) el.setAttribute('checked', 'checked');
+      else el.removeAttribute('checked');
+    });
+    document.querySelectorAll('textarea').forEach(function(el) { el.textContent = el.value; });
+    document.querySelectorAll('select').forEach(function(el) {
+      Array.from(el.options).forEach(function(opt) {
+        if (opt.value === el.value) opt.setAttribute('selected', 'selected');
+        else opt.removeAttribute('selected');
+      });
+    });
+    
+    var pre = document.getElementById('ascii-report') || document.getElementById('outputPre') || document.getElementById('preview') || document.getElementById('outputArea');
+    if (pre) pre.textContent = pre.textContent;
+
+    var clonedDoc = document.documentElement.cloneNode(true);
+    var modalInClone = clonedDoc.querySelector('#saveModalBackdrop');
+    if (modalInClone) modalInClone.classList.remove('active');
+
+    var htmlContent = '<!DOCTYPE html>\n' + clonedDoc.outerHTML;
+    var blob = new Blob([htmlContent], { type: 'text/html;charset=utf-8' });
+    var url = URL.createObjectURL(blob);
+    var a = document.createElement('a');
+    a.href = url;
+    a.download = chosenName;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  }
+
+  // Initialize event listeners safely after DOM loads
+  window.addEventListener('DOMContentLoaded', function() {
+    var cancelBtn = document.getElementById('saveModalCancelBtn');
+    var confirmBtn = document.getElementById('saveModalSaveBtn');
+    var modalInput = document.getElementById('saveModalFileName');
+    var modalBackdrop = document.getElementById('saveModalBackdrop');
+
+    if (cancelBtn) cancelBtn.addEventListener('click', closeSaveModal);
+    if (confirmBtn) confirmBtn.addEventListener('click', executeSaveHTML);
+    if (modalInput) {
+      modalInput.addEventListener('keydown', function(e) {
+        if (e.key === 'Enter') { e.preventDefault(); executeSaveHTML(); }
+        if (e.key === 'Escape') { e.preventDefault(); closeSaveModal(); }
+      });
+    }
+    if (modalBackdrop) {
+      modalBackdrop.addEventListener('click', function(e) {
+        if (e.target === modalBackdrop) closeSaveModal();
+      });
+    }
+
+    var btnSaveMain = document.getElementById('btnSaveHtml');
+    if (btnSaveMain) {
+      btnSaveMain.addEventListener('click', openSaveModal);
+    }
+  });
+</script>
+
+  <!-- Custom File Name Modal Window -->
+  <div id="saveModalBackdrop" class="save-modal-backdrop">
+    <div class="save-modal-window">
+      <h3>Save Form as HTML</h3>
+      <p>Enter a name for the saved offline HTML file:</p>
+      <input type="text" id="saveModalFileName" spellcheck="false">
+      <div class="save-modal-actions">
+        <button type="button" class="save-modal-btn save-modal-btn-cancel" id="saveModalCancelBtn">Cancel</button>
+        <button type="button" class="save-modal-btn save-modal-btn-confirm" id="saveModalSaveBtn">Save File</button>
+      </div>
+    </div>
+  </div>
+
+</body>
+</html>

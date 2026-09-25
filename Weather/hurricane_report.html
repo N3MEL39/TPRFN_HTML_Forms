@@ -1,0 +1,428 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Hurricane Report (Winlink / Packet Radio)</title>
+  <style>
+
+    * { box-sizing: border-box; }
+    body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, monospace; background: #eef2f7; color: #222; padding: 20px; margin: 0; }
+    .container { max-width: 960px; margin: 0 auto; background: #fff; padding: 24px; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+    .header { padding: 12px; border-radius: 6px; text-align: center; margin-bottom: 18px; color: white; }
+    .header h2 { margin: 0; font-size: 1.3rem; letter-spacing: 1px; }
+    .header p { margin: 4px 0 0 0; font-size: 0.85rem; opacity: 0.9; }
+    fieldset { border: 1px solid #cbd5e1; border-radius: 6px; padding: 14px; margin-bottom: 14px; background: #fafcff; }
+    legend { font-weight: bold; padding: 0 8px; font-size: 0.85rem; }
+    .row { display: flex; flex-wrap: wrap; gap: 12px; margin-bottom: 10px; }
+    .col { flex: 1; min-width: 140px; display: flex; flex-direction: column; }
+    .label-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px; }
+    label { font-size: 0.8rem; font-weight: 600; color: #333; }
+    input[type="text"], select, textarea { padding: 7px 8px; font-size: 0.88rem; border: 1px solid #999; border-radius: 4px; font-family: inherit; width: 100%; }
+    textarea { resize: vertical; min-height: 60px; }
+    .btn-now { background: #4a5568; color: #fff; padding: 4px 8px; font-size: 0.72rem; border-radius: 4px; border: none; cursor: pointer; }
+    .btn-now:hover { background: #2d3748; }
+    .actions { display: flex; gap: 10px; margin: 18px 0; }
+    button.main-btn { flex: 1; padding: 12px; font-size: 0.95rem; font-weight: bold; border: none; border-radius: 6px; cursor: pointer; color: #fff; }
+    .btn-save { background: #5c6bc0; }
+    .btn-save:hover { background: #3f51b5; }
+    .btn-copy { background: #2e7d32; }
+    .btn-copy:hover { background: #1b5e20; }
+    .btn-clear { background: #c62828; flex: 0.35; }
+    .btn-clear:hover { background: #8e0000; }
+    pre { background: #181c20; color: #39ff14; padding: 14px; border-radius: 6px; overflow-x: auto; font-family: "Courier New", Courier, monospace; font-size: 0.82rem; line-height: 1.32; min-height: 140px; }
+    .nav-bar { margin-bottom: 12px; font-size: 0.85rem; }
+    .nav-bar a { text-decoration: none; font-weight: bold; }
+
+    /* Modal Save Dialog Window */
+    .save-modal-backdrop {
+      display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+      background: rgba(0,0,0,0.55); z-index: 99999; justify-content: center; align-items: center;
+    }
+    .save-modal-backdrop.active { display: flex; }
+    .save-modal-window {
+      background: #ffffff; padding: 24px 28px; border-radius: 10px; width: 92%; max-width: 480px;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.3); border: 1px solid #cbd5e1; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    }
+    .save-modal-window h3 { margin: 0 0 8px 0; font-size: 1.25rem; color: #1e293b; font-weight: bold; }
+    .save-modal-window p { margin: 0 0 16px 0; font-size: 0.88rem; color: #64748b; line-height: 1.4; }
+    .save-modal-window input[type="text"] {
+      width: 100%; padding: 10px 12px; font-size: 0.95rem; border: 2px solid #94a3b8; border-radius: 6px;
+      margin-bottom: 20px; font-family: inherit; box-sizing: border-box; text-transform: none;
+    }
+    .save-modal-window input[type="text"]:focus { border-color: #2563eb; outline: none; }
+    .save-modal-actions { display: flex; gap: 10px; justify-content: flex-end; }
+    .save-modal-btn { padding: 9px 18px; font-size: 0.9rem; font-weight: bold; border-radius: 6px; border: none; cursor: pointer; }
+    .save-modal-btn-confirm { background: #2563eb; color: #ffffff; }
+    .save-modal-btn-confirm:hover { background: #1d4ed8; }
+    .save-modal-btn-cancel { background: #e2e8f0; color: #334155; }
+    .save-modal-btn-cancel:hover { background: #cbd5e1; }
+
+    .header { background: #01579b; }
+    legend { color: #01579b; }
+    .nav-bar a { color: #01579b; }
+    .btn-generate { background: #01579b; }
+    .btn-generate:hover { background: #002f6c; }
+    .notice { font-size: 0.8rem; color: #01579b; font-weight: bold; margin-bottom: 8px; }
+  </style>
+</head>
+<body>
+<div class="container">
+  <div class="nav-bar"><a href="../index.html">&larr; Back to Packet Forms Hub</a></div>
+  <div class="header">
+    <h2>HURRICANE REPORT (WX4NHC / NWS)</h2>
+    <p>National Hurricane Center & Extreme Tropical Event Report (Packet ASCII)</p>
+  </div>
+
+  <div class="notice">&bull; Hurricane Watch Net (HWN) Active Frequency: 14.325 MHz / 7.268 MHz &bull; SendTo: WX4NHC</div>
+
+  <form id="hurrForm" onsubmit="event.preventDefault(); return false;">
+    <fieldset>
+      <legend>1-4. HEADER & OBSERVER IDENTIFICATION</legend>
+      <div class="row">
+        <div class="col">
+          <div class="label-row">
+            <label for="dtZulu">1. Date / Time (UTC)</label>
+            <button type="button" class="btn-now" id="btnDateNow">Current UTC</button>
+          </div>
+          <input type="text" id="dtZulu" placeholder="YYYY-MM-DD HHMMZ">
+        </div>
+        <div class="col" style="max-width: 170px;">
+          <label for="repType">2. Report Status</label>
+          <select id="repType">
+            <option value="First Report" selected>First Report</option>
+            <option value="Update Report">Update Report</option>
+            <option value="Final Report">Final Report</option>
+          </select>
+        </div>
+        <div class="col" style="max-width: 140px;"><label for="msgSender">3. Sender Call</label><input type="text" id="msgSender" placeholder="N0CALL"></div>
+        <div class="col">
+          <label for="isObserver">4. Are you the Observer?</label>
+          <select id="isObserver">
+            <option value="YES (Station Observer)" selected>YES (Observer)</option>
+            <option value="NO (Relaying for Other Observer)">NO (Relaying for Other)</option>
+          </select>
+        </div>
+      </div>
+      <div class="row">
+        <div class="col"><label for="obsEmail">5. Observer Email / Winlink</label><input type="text" id="obsEmail"></div>
+        <div class="col"><label for="obsPhone">6. Observer Phone Number</label><input type="text" id="obsPhone"></div>
+      </div>
+    </fieldset>
+
+    <fieldset>
+      <legend>6-9. GEOGRAPHIC LOCATION & COORDINATES</legend>
+      <div class="row">
+        <div class="col"><label for="city">6. City</label><input type="text" id="city"></div>
+        <div class="col"><label for="county">7. County / Parish / Region</label><input type="text" id="county"></div>
+        <div class="col" style="max-width: 90px;"><label for="state">8. State</label><input type="text" id="state" placeholder="FL"></div>
+        <div class="col"><label for="country">9. Country</label><input type="text" id="country" value="USA"></div>
+      </div>
+      <div class="row">
+        <div class="col"><label for="lat">Latitude (Decimal)</label><input type="text" id="lat" placeholder="25.7617"></div>
+        <div class="col"><label for="lon">Longitude (Decimal)</label><input type="text" id="lon" placeholder="-80.1918"></div>
+        <div class="col"><label for="mgrs">MGRS</label><input type="text" id="mgrs" placeholder="17R NJ 8085 4995"></div>
+        <div class="col" style="max-width: 120px;"><label for="grid">Grid Square</label><input type="text" id="grid" placeholder="EL95ts"></div>
+      </div>
+    </fieldset>
+
+    <fieldset>
+      <legend>10-15. MEASUREMENTS & CONDITIONS</legend>
+      <div class="row">
+        <div class="col" style="max-width: 160px;">
+          <label for="measType">10. Measurements</label>
+          <select id="measType">
+            <option value="Measured (Instruments)" selected>Measured (Instruments)</option>
+            <option value="Estimated">Estimated</option>
+          </select>
+        </div>
+        <div class="col"><label for="instruments">11. Instruments Used</label><input type="text" id="instruments" placeholder="e.g. Davis Vantage Pro 2, Kestrel 3500"></div>
+      </div>
+      <div class="row">
+        <div class="col" style="max-width: 130px;"><label for="windSpeed">12. Wind Speed</label><input type="text" id="windSpeed" placeholder="65"></div>
+        <div class="col" style="max-width: 100px;">
+          <label for="windUnit">Unit</label>
+          <select id="windUnit"><option value="MPH" selected>MPH</option><option value="Knots">Knots</option><option value="KM/h">KM/h</option></select>
+        </div>
+        <div class="col" style="max-width: 130px;"><label for="gustSpeed">13. Gust Speed</label><input type="text" id="gustSpeed" placeholder="85"></div>
+        <div class="col" style="max-width: 100px;">
+          <label for="gustUnit">Unit</label>
+          <select id="gustUnit"><option value="MPH" selected>MPH</option><option value="Knots">Knots</option><option value="KM/h">KM/h</option></select>
+        </div>
+        <div class="col" style="max-width: 130px;">
+          <label for="windDir">14. Wind Direction</label>
+          <select id="windDir">
+            <option value="Calm">Calm</option><option value="Variable">Variable</option>
+            <option value="N">N</option><option value="NE" selected>NE</option><option value="E">E</option><option value="SE">SE</option>
+            <option value="S">S</option><option value="SW">SW</option><option value="W">W</option><option value="NW">NW</option>
+          </select>
+        </div>
+        <div class="col" style="max-width: 150px;"><label for="pressure">15. Barometer</label><input type="text" id="pressure" placeholder="29.45 / 997"></div>
+        <div class="col" style="max-width: 110px;">
+          <label for="pressUnit">Unit</label>
+          <select id="pressUnit"><option value="Inches (inHg)" selected>Inches (inHg)</option><option value="Millibars (mb)">Millibars (mb)</option></select>
+        </div>
+      </div>
+    </fieldset>
+
+    <fieldset>
+      <legend>16. STORM SURGE, DAMAGE & EYEWITNESS COMMENTS</legend>
+      <textarea id="comments" rows="4" placeholder="Observed storm surge height, severe street flooding, rain totals, structural destruction, downed trees/lines, evacuations..."></textarea>
+    </fieldset>
+
+    <div class="actions">
+      <button type="button" class="main-btn btn-generate" id="btnGen">Generate Packet ASCII</button>
+      <button type="button" class="main-btn btn-save" id="btnSaveHtml">Save as HTML</button>
+      <button type="button" class="main-btn btn-copy" id="btnCopy">Copy ASCII</button>
+      <button type="button" class="main-btn btn-clear" id="btnClear">Reset</button>
+    </div>
+  </form>
+
+  <label style="font-weight:bold;">Formatted ASCII for Packet / BBS / Winlink Transmission:</label>
+  <pre id="outputPre">Fill in the fields above and click "Generate Packet ASCII"...</pre>
+</div>
+
+<!-- Custom File Name Modal Window -->
+
+<script>
+  function setUTC() {
+    var now = new Date();
+    var y = now.getUTCFullYear();
+    var m = String(now.getUTCMonth()+1).padStart(2,'0');
+    var d = String(now.getUTCDate()).padStart(2,'0');
+    var hh = String(now.getUTCHours()).padStart(2,'0');
+    var mm = String(now.getUTCMinutes()).padStart(2,'0');
+    document.getElementById('dtZulu').value = y + '-' + m + '-' + d + ' ' + hh + mm + 'Z';
+  }
+
+  function clean(id) {
+    var el = document.getElementById(id);
+    return el ? (el.value || '').trim() : '';
+  }
+
+  function pad(str, len) {
+    str = (str || '').toString();
+    return str + ' '.repeat(Math.max(0, len - str.length));
+  }
+
+  function wrapText(str, width) {
+    if (!str) return [];
+    var lines = [];
+    str.split('\n').forEach(function(paragraph) {
+      var words = paragraph.split(' ');
+      var cur = '';
+      words.forEach(function(w) {
+        if ((cur + (cur ? ' ' : '') + w).length <= width) {
+          cur += (cur ? ' ' : '') + w;
+        } else {
+          if (cur) lines.push(cur);
+          cur = w;
+        }
+      });
+      if (cur) lines.push(cur);
+    });
+    return lines;
+  }
+
+  function generateASCII() {
+    try {
+      var div = '='.repeat(78);
+      var sub = '-'.repeat(78);
+
+      var dt = clean('dtZulu') || 'N/A';
+      var rType = clean('repType');
+      var call = clean('msgSender') || 'N0CALL';
+      var isObs = clean('isObserver');
+      var email = clean('obsEmail') || 'N/A';
+      var phone = clean('obsPhone') || 'N/A';
+
+      var city = clean('city');
+      var county = clean('county');
+      var st = clean('state');
+      var country = clean('country');
+      var lat = clean('lat') || 'N/A';
+      var lon = clean('lon') || 'N/A';
+      var mgrs = clean('mgrs') || 'N/A';
+      var grid = clean('grid') || 'N/A';
+
+      var mType = clean('measType');
+      var inst = clean('instruments') || 'N/A';
+      var wspd = clean('windSpeed') || 'N/A';
+      var wunit = clean('windUnit');
+      var gspd = clean('gustSpeed') || 'N/A';
+      var gunit = clean('gustUnit');
+      var wdir = clean('windDir');
+      var press = clean('pressure') || 'N/A';
+      var punit = clean('pressUnit');
+      var cmt = clean('comments') || 'NONE REPORTED';
+
+      var wrappedCmt = wrapText(cmt, 72).map(function(l){ return '  ' + l; }).join('\n');
+
+      var out = div + '\n' +
+        'HURRICANE / TROPICAL EVENT REPORT (PACKET ASCII)\n' +
+        div + '\n' +
+        pad('TO', 16) + ' : WX4NHC (NATIONAL HURRICANE CENTER) / HWN\n' +
+        pad('STATUS / VER', 16) + ' : ' + pad(rType, 18) + ' DATE/TIME (UTC) : ' + dt + '\n' +
+        pad('SENDER CALL', 16) + ' : ' + pad(call, 18) + ' OBSERVER STATUS : ' + isObs + '\n' +
+        pad('CONTACT', 16) + ' : EMAIL: ' + email + ' | PHONE: ' + phone + '\n' +
+        sub + '\n' +
+        'LOCATION & COORDINATES:\n' +
+        pad('AREA', 16) + ' : ' + (city ? city + ', ' : '') + (county ? county + ' CO, ' : '') + st + ' (' + country + ')\n' +
+        pad('COORDS', 16) + ' : LAT: ' + pad(lat, 12) + ' LON: ' + pad(lon, 12) + ' MGRS: ' + pad(mgrs, 16) + ' GRID: ' + grid + '\n' +
+        sub + '\n' +
+        'OBSERVED METEOROLOGICAL DATA:\n' +
+        pad('MEASUREMENT TYPE', 16) + ' : ' + mType + '\n' +
+        pad('INSTRUMENTS', 16) + ' : ' + inst + '\n' +
+        pad('SUSTAINED WIND', 16) + ' : ' + wspd + ' ' + wunit + '          GUST: ' + gspd + ' ' + gunit + '          DIR: ' + wdir + '\n' +
+        pad('BAROMETER', 16) + ' : ' + press + ' ' + punit + '\n' +
+        sub + '\n' +
+        'SURGE, FLOODING, DAMAGE & EYEWITNESS REPORT:\n' +
+        wrappedCmt + '\n' +
+        div;
+
+      document.getElementById('outputPre').textContent = out;
+    } catch(err) {
+      alert("Error generating text: " + err.message);
+    }
+  }
+
+  function copyASCII() {
+    var txt = document.getElementById('outputPre').textContent;
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(txt).then(function() {
+        alert("Hurricane Report copied to clipboard!");
+      }).catch(function() {
+        fallbackCopy();
+      });
+    } else {
+      fallbackCopy();
+    }
+  }
+
+  function fallbackCopy() {
+    var pre = document.getElementById('outputPre');
+    var range = document.createRange();
+    range.selectNode(pre);
+    window.getSelection().removeAllRanges();
+    window.getSelection().addRange(range);
+    document.execCommand('copy');
+    alert("Copied to clipboard!");
+  }
+
+  function clearForm() {
+    if(confirm("Reset Hurricane Report form?")) {
+      document.getElementById('hurrForm').reset();
+      document.getElementById('outputPre').textContent = 'Fill in the fields above and click "Generate Packet ASCII"...';
+    }
+  }
+
+  window.addEventListener('DOMContentLoaded', function() {
+    document.getElementById('btnDateNow').addEventListener('click', setUTC);
+    document.getElementById('btnGen').addEventListener('click', generateASCII);
+    document.getElementById('btnCopy').addEventListener('click', copyASCII);
+    document.getElementById('btnClear').addEventListener('click', clearForm);
+  });
+
+  // --- File Name Modal Window & HTML Exporter ---
+  function openSaveModal() {
+    var now = new Date();
+    var dStr = now.toISOString().slice(0, 10);
+    var defName = 'hurricane_report_' + dStr + '.html';
+    var modal = document.getElementById('saveModalBackdrop');
+    var input = document.getElementById('saveModalFileName');
+    if (input) input.value = defName;
+    if (modal) modal.classList.add('active');
+    setTimeout(function() {
+      if (input) { input.focus(); input.select(); }
+    }, 50);
+  }
+
+  function closeSaveModal() {
+    var modal = document.getElementById('saveModalBackdrop');
+    if (modal) modal.classList.remove('active');
+  }
+
+  function executeSaveHTML() {
+    var input = document.getElementById('saveModalFileName');
+    var chosenName = input ? input.value.trim() : '';
+    if (!chosenName) return;
+    if (!chosenName.toLowerCase().endsWith('.html') && !chosenName.toLowerCase().endsWith('.htm')) {
+      chosenName += '.html';
+    }
+    closeSaveModal();
+
+    // Sync input values to DOM attributes so they save offline
+    document.querySelectorAll('input[type="text"]').forEach(function(el) { el.setAttribute('value', el.value); });
+    document.querySelectorAll('input[type="checkbox"], input[type="radio"]').forEach(function(el) {
+      if (el.checked) el.setAttribute('checked', 'checked');
+      else el.removeAttribute('checked');
+    });
+    document.querySelectorAll('textarea').forEach(function(el) { el.textContent = el.value; });
+    document.querySelectorAll('select').forEach(function(el) {
+      Array.from(el.options).forEach(function(opt) {
+        if (opt.value === el.value) opt.setAttribute('selected', 'selected');
+        else opt.removeAttribute('selected');
+      });
+    });
+    
+    var pre = document.getElementById('ascii-report') || document.getElementById('outputPre') || document.getElementById('preview') || document.getElementById('outputArea');
+    if (pre) pre.textContent = pre.textContent;
+
+    var clonedDoc = document.documentElement.cloneNode(true);
+    var modalInClone = clonedDoc.querySelector('#saveModalBackdrop');
+    if (modalInClone) modalInClone.classList.remove('active');
+
+    var htmlContent = '<!DOCTYPE html>\n' + clonedDoc.outerHTML;
+    var blob = new Blob([htmlContent], { type: 'text/html;charset=utf-8' });
+    var url = URL.createObjectURL(blob);
+    var a = document.createElement('a');
+    a.href = url;
+    a.download = chosenName;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  }
+
+  // Initialize event listeners safely after DOM loads
+  window.addEventListener('DOMContentLoaded', function() {
+    var cancelBtn = document.getElementById('saveModalCancelBtn');
+    var confirmBtn = document.getElementById('saveModalSaveBtn');
+    var modalInput = document.getElementById('saveModalFileName');
+    var modalBackdrop = document.getElementById('saveModalBackdrop');
+
+    if (cancelBtn) cancelBtn.addEventListener('click', closeSaveModal);
+    if (confirmBtn) confirmBtn.addEventListener('click', executeSaveHTML);
+    if (modalInput) {
+      modalInput.addEventListener('keydown', function(e) {
+        if (e.key === 'Enter') { e.preventDefault(); executeSaveHTML(); }
+        if (e.key === 'Escape') { e.preventDefault(); closeSaveModal(); }
+      });
+    }
+    if (modalBackdrop) {
+      modalBackdrop.addEventListener('click', function(e) {
+        if (e.target === modalBackdrop) closeSaveModal();
+      });
+    }
+
+    var btnSaveMain = document.getElementById('btnSaveHtml');
+    if (btnSaveMain) {
+      btnSaveMain.addEventListener('click', openSaveModal);
+    }
+  });
+</script>
+
+  <!-- Custom File Name Modal Window -->
+  <div id="saveModalBackdrop" class="save-modal-backdrop">
+    <div class="save-modal-window">
+      <h3>Save Form as HTML</h3>
+      <p>Enter a name for the saved offline HTML file:</p>
+      <input type="text" id="saveModalFileName" spellcheck="false">
+      <div class="save-modal-actions">
+        <button type="button" class="save-modal-btn save-modal-btn-cancel" id="saveModalCancelBtn">Cancel</button>
+        <button type="button" class="save-modal-btn save-modal-btn-confirm" id="saveModalSaveBtn">Save File</button>
+      </div>
+    </div>
+  </div>
+
+</body>
+</html>

@@ -1,0 +1,402 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>TPRFN - SKYWARN WINLINK GENERATOR</title>
+  <style>
+
+    * { box-sizing: border-box; }
+    body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, monospace; background: #eef2f7; color: #222; padding: 20px; margin: 0; }
+    .container { max-width: 960px; margin: 0 auto; background: #fff; padding: 24px; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+    .header { padding: 12px; border-radius: 6px; text-align: center; margin-bottom: 18px; color: white; }
+    .header h2 { margin: 0; font-size: 1.3rem; letter-spacing: 1px; }
+    .header p { margin: 4px 0 0 0; font-size: 0.85rem; opacity: 0.9; }
+    fieldset { border: 1px solid #cbd5e1; border-radius: 6px; padding: 14px; margin-bottom: 14px; background: #fafcff; }
+    legend { font-weight: bold; padding: 0 8px; font-size: 0.85rem; }
+    .row { display: flex; flex-wrap: wrap; gap: 12px; margin-bottom: 10px; }
+    .col { flex: 1; min-width: 140px; display: flex; flex-direction: column; }
+    .label-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px; }
+    label { font-size: 0.8rem; font-weight: 600; color: #333; }
+    input[type="text"], select, textarea { padding: 7px 8px; font-size: 0.88rem; border: 1px solid #999; border-radius: 4px; font-family: inherit; width: 100%; }
+    textarea { resize: vertical; min-height: 60px; }
+    .btn-now { background: #4a5568; color: #fff; padding: 4px 8px; font-size: 0.72rem; border-radius: 4px; border: none; cursor: pointer; }
+    .btn-now:hover { background: #2d3748; }
+    .actions { display: flex; gap: 10px; margin: 18px 0; }
+    button.main-btn { flex: 1; padding: 12px; font-size: 0.95rem; font-weight: bold; border: none; border-radius: 6px; cursor: pointer; color: #fff; }
+    .btn-save { background: #5c6bc0; }
+    .btn-save:hover { background: #3f51b5; }
+    .btn-copy { background: #2e7d32; }
+    .btn-copy:hover { background: #1b5e20; }
+    .btn-clear { background: #c62828; flex: 0.35; }
+    .btn-clear:hover { background: #8e0000; }
+    pre { background: #181c20; color: #39ff14; padding: 14px; border-radius: 6px; overflow-x: auto; font-family: "Courier New", Courier, monospace; font-size: 0.82rem; line-height: 1.32; min-height: 140px; }
+    .nav-bar { margin-bottom: 12px; font-size: 0.85rem; }
+    .nav-bar a { text-decoration: none; font-weight: bold; }
+
+    /* Modal Save Dialog Window */
+    .save-modal-backdrop {
+      display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+      background: rgba(0,0,0,0.55); z-index: 99999; justify-content: center; align-items: center;
+    }
+    .save-modal-backdrop.active { display: flex; }
+    .save-modal-window {
+      background: #ffffff; padding: 24px 28px; border-radius: 10px; width: 92%; max-width: 480px;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.3); border: 1px solid #cbd5e1; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    }
+    .save-modal-window h3 { margin: 0 0 8px 0; font-size: 1.25rem; color: #1e293b; font-weight: bold; }
+    .save-modal-window p { margin: 0 0 16px 0; font-size: 0.88rem; color: #64748b; line-height: 1.4; }
+    .save-modal-window input[type="text"] {
+      width: 100%; padding: 10px 12px; font-size: 0.95rem; border: 2px solid #94a3b8; border-radius: 6px;
+      margin-bottom: 20px; font-family: inherit; box-sizing: border-box; text-transform: none;
+    }
+    .save-modal-window input[type="text"]:focus { border-color: #2563eb; outline: none; }
+    .save-modal-actions { display: flex; gap: 10px; justify-content: flex-end; }
+    .save-modal-btn { padding: 9px 18px; font-size: 0.9rem; font-weight: bold; border-radius: 6px; border: none; cursor: pointer; }
+    .save-modal-btn-confirm { background: #2563eb; color: #ffffff; }
+    .save-modal-btn-confirm:hover { background: #1d4ed8; }
+    .save-modal-btn-cancel { background: #e2e8f0; color: #334155; }
+    .save-modal-btn-cancel:hover { background: #cbd5e1; }
+
+    .header { background: #0056b3; }
+    legend { color: #0056b3; }
+    .nav-bar a { color: #0056b3; }
+    .btn-generate { background: #0056b3; }
+    .btn-generate:hover { background: #004494; }
+    optgroup { font-weight: bold; color: #0056b3; }
+  </style>
+</head>
+<body>
+
+<div class="container">
+  <div class="nav-bar"><a href="../index.html">&larr; Back to Packet Forms Hub</a></div>
+  <div class="header">
+    <h2>TPRFN SKYWARN WINLINK GENERATOR</h2>
+    <p><a href="https://www.tprfn.net" target="_blank" style="color:white; text-decoration:underline;">WWW.TPRFN.NET</a></p>
+  </div>
+
+  <form id="skywarnForm" onsubmit="event.preventDefault(); return false;">
+    <fieldset>
+      <legend>1. RECIPIENT & STATION INFO</legend>
+      <div class="row">
+        <div class="col" style="flex: 2;">
+          <label for="nws-presets">NWS Office / Recipient</label>
+          <select id="nws-presets" onchange="document.getElementById('nws-office').value = this.value;">
+            <option value="">-- SELECT OFFICE --</option>
+            <option value="SP N3MEL@N3MEL.#EPA.PA.USA.NOAM">(PKTNET CHECK-IN )</option>
+            <option value="PHI@WINLINK.ORG">PHI@WINLINK.ORG (PHILLY TACTICAL)</option>
+            <option value="WX-CTP@WINLINK.ORG">WX-CTP@WINLINK.ORG (STATE COLLEGE PA)</option>
+            <option value="WX1BOX@WINLINK.ORG">WX1BOX@WINLINK.ORG (BOSTON, MA)</option>
+            <option value="WX2OKX@WINLINK.ORG">WX2OKX@WINLINK.ORG (UPTON/NYC, NY)</option>
+            <option value="WX4LWX@WINLINK.ORG">WX4LWX@WINLINK.ORG (BALT/WASH DC)</option>
+            <option value="LWX@WINLINK.ORG">LWX@WINLINK.ORG (DC TACTICAL)</option>
+            <option value="WX4PTC@WINLINK.ORG">WX4PTC@WINLINK.ORG (ATLANTA, GA)</option>
+            <option value="WX5OUN@WINLINK.ORG">WX5OUN@WINLINK.ORG (NORMAN, OK)</option>
+            <option value="WX9LOT@WINLINK.ORG">WX9LOT@WINLINK.ORG (CHICAGO, IL)</option>
+            <option value="WX6LOX@WINLINK.ORG">WX6LOX@WINLINK.ORG (LOS ANGELES, CA)</option>
+          </select>
+        </div>
+        <div class="col" style="flex: 2;">
+          <label for="nws-office">Target Address (Manual)</label>
+          <input type="text" id="nws-office" placeholder="TARGET@WINLINK.ORG">
+        </div>
+      </div>
+      <div class="row">
+        <div class="col"><label for="callsign">Your Callsign</label><input type="text" id="callsign" placeholder="E.G., N3MEL"></div>
+        <div class="col"><label for="spotter-id">Spotter Number</label><input type="text" id="spotter-id" placeholder="E.G., CHPA-196"></div>
+      </div>
+    </fieldset>
+
+    <fieldset>
+      <legend>2. EVENT & LOCATION</legend>
+      <div class="row">
+        <div class="col" style="flex: 2;">
+          <label for="event">Event Type & Criteria</label>
+          <select id="event">
+            <option value="" selected disabled>-- SELECT ONE --</option>
+            <optgroup label="CHECK-IN">
+              <option value="PKTNET CHECK-IN">PKTNET CHECK-IN</option>
+            </optgroup>
+            <optgroup label="TESTING & DRILLS">
+              <option value="TEST ONLY - DISREGARD">TEST REPORT - DISREGARD / DRILL ONLY</option>
+            </optgroup>
+            <optgroup label="TORNADO & WALL CLOUDS">
+              <option value="TORNADO">TORNADO (ANY ROTATION/DURATION)</option>
+              <option value="FUNNEL CLOUD">FUNNEL CLOUD (ANY ROTATION/DURATION)</option>
+              <option value="ROTATING WALL CLOUD">ROTATING WALL CLOUD (SUSTAINED VERTICAL)</option>
+            </optgroup>
+            <optgroup label="HAIL SIZES">
+              <option value="HAIL: PENNY (0.75 IN)">HAIL: PENNY (0.75 IN)</option>
+              <option value="HAIL: NICKEL (0.88 IN)">HAIL: NICKEL (0.88 IN)</option>
+              <option value="HAIL: QUARTER (1.00 IN)">HAIL: QUARTER (1.00 IN - SEVERE)</option>
+              <option value="HAIL: GOLF BALL (1.75 IN)">HAIL: GOLF BALL (1.75 IN)</option>
+            </optgroup>
+            <optgroup label="WIND & RAIN">
+              <option value="WIND GUST: 40-50 MPH">WIND GUST: 40-50 MPH (MEASURED)</option>
+              <option value="WIND DAMAGE: ESTIMATED">WIND DAMAGE: ESTIMATED (TREES/STRUCTURAL)</option>
+              <option value="RAIN: 1+ IN/HOUR">HEAVY RAIN: 1 INCH OR MORE PER HOUR</option>
+              <option value="FLOODING: ROADS/STREAMS">FLOODING: STREETS, STREAMS, OR ROADS</option>
+            </optgroup>
+            <optgroup label="DAMAGE & INJURY">
+              <option value="DAMAGE: INJURY">DAMAGE: WEATHER-RELATED INJURY</option>
+              <option value="DAMAGE: PROPERTY">DAMAGE: SIGNIFICANT PROPERTY DAMAGE</option>
+            </optgroup>
+          </select>
+        </div>
+        <div class="col">
+          <div class="label-row">
+            <label for="time">Date & Time</label>
+            <button type="button" class="btn-now" id="btnDateNow">Current Time</button>
+          </div>
+          <input type="text" id="time" placeholder="YYYY-MM-DD HH:MM L">
+        </div>
+      </div>
+      <div class="row">
+        <div class="col" style="flex: 2;"><label for="location">Location (Town, State)</label><input type="text" id="location" placeholder="E.G., DOWNINGTOWN, PA"></div>
+        <div class="col"><label for="grid">Grid Square</label><input type="text" id="grid" placeholder="E.G., FM29DX"></div>
+      </div>
+    </fieldset>
+
+    <fieldset>
+      <legend>3. CHANGEOVER REPORT (OPTIONAL)</legend>
+      <div class="row">
+        <div class="col"><label for="from-type">From Precip/Event Type</label><input type="text" id="from-type" placeholder="E.G., HEAVY RAIN"></div>
+        <div class="col"><label for="to-type">To Precip/Event Type</label><input type="text" id="to-type" placeholder="E.G., FREEZING RAIN"></div>
+        <div class="col">
+          <div class="label-row">
+            <label for="change-time">Changeover Time</label>
+            <button type="button" class="btn-now" id="btnChangeNow">Set Now</button>
+          </div>
+          <input type="text" id="change-time" placeholder="E.G., 14:15 L">
+        </div>
+      </div>
+    </fieldset>
+
+    <fieldset>
+      <legend>4. REMARKS</legend>
+      <textarea id="details" rows="3" placeholder="SPECIFICS: MOVEMENT, POWER LINES DOWN, ETC."></textarea>
+    </fieldset>
+
+    <div class="actions">
+      <button type="button" class="main-btn btn-generate" id="btnGen">Generate Packet ASCII</button>
+      <button type="button" class="main-btn btn-save" id="btnSaveHtml">Save as HTML</button>
+      <button type="button" class="main-btn btn-copy" id="btnCopy">Copy ASCII</button>
+      <button type="button" class="main-btn btn-clear" id="btnClear">Reset</button>
+    </div>
+  </form>
+
+  <label style="font-weight:bold;">Formatted ASCII for Packet / BBS Transmission:</label>
+  <pre id="outputPre">Fill in the fields above and click "Generate Packet ASCII"...</pre>
+</div>
+
+<!-- Custom File Name Modal Window -->
+
+<script>
+  function pad(str, len) {
+    str = (str || '').toString();
+    return str + ' '.repeat(Math.max(0, len - str.length));
+  }
+
+  function setCurrentTime(targetId) {
+    var now = new Date();
+    var year = now.getFullYear();
+    var month = String(now.getMonth() + 1).padStart(2, '0');
+    var day = String(now.getDate()).padStart(2, '0');
+    var hours = String(now.getHours()).padStart(2, '0');
+    var minutes = String(now.getMinutes()).padStart(2, '0');
+    var el = document.getElementById(targetId);
+    if (el) el.value = year + '-' + month + '-' + day + ' ' + hours + ':' + minutes + ' L';
+  }
+
+  function generateReport() {
+    var eventSelect = document.getElementById('event');
+    if (!eventSelect.value) {
+      alert("PLEASE SELECT AN EVENT TYPE BEFORE GENERATING THE REPORT.");
+      eventSelect.focus();
+      return;
+    }
+
+    var toAddr = (document.getElementById('nws-office').value || '').trim() || "WX2PHI@WINLINK.ORG";
+    var call = (document.getElementById('callsign').value || '').trim() || "NOCALL";
+    var spotter = (document.getElementById('spotter-id').value || '').trim() || "N/A";
+    var eventVal = (eventSelect.value || '').trim();
+    var loc = (document.getElementById('location').value || '').trim() || "N/A";
+    var grid = (document.getElementById('grid').value || '').trim() || "N/A";
+    var time = (document.getElementById('time').value || '').trim() || "N/A";
+    var details = (document.getElementById('details').value || '').trim() || "NONE";
+
+    var fromType = (document.getElementById('from-type').value || '').trim() || "N/A";
+    var toType = (document.getElementById('to-type').value || '').trim() || "N/A";
+    var changeTime = (document.getElementById('change-time').value || '').trim() || "N/A";
+
+    var subject = "WX REPORT - " + eventVal + " - " + loc;
+    var div = "--------------------------------------------------------------------------";
+
+    var body = "*** TPRFN SKYWARN SEVERE WEATHER REPORT ***\n" +
+               div + "\n" +
+               pad("TO ADDRESS", 16) + " : " + toAddr + "\n" +
+               pad("SUBJECT", 16) + " : " + subject + "\n" +
+               div + "\n" +
+               pad("SENDER CALL", 16) + " : " + call + "\n" +
+               pad("SPOTTER ID", 16) + " : " + spotter + "\n" +
+               pad("EVENT TYPE", 16) + " : " + eventVal + "\n" +
+               pad("DATE/TIME", 16) + " : " + time + "\n" +
+               pad("GRID SQUARE", 16) + " : " + grid + "\n" +
+               pad("LOCATION", 16) + " : " + loc + "\n";
+
+    if (fromType !== "N/A" || toType !== "N/A" || changeTime !== "N/A") {
+        body += "\n--- CHANGEOVER REPORT ---\n" +
+                pad("FROM TYPE", 16) + " : " + fromType + "\n" +
+                pad("TO TYPE", 16) + " : " + toType + "\n" +
+                pad("TIME/REM", 16) + " : " + changeTime + "\n";
+    }
+
+    body +=      "\nREMARKS :\n  " + details + "\n" +
+               div + "\n" +
+               "SENT VIA PACKET RMS / TPRFN NETWORK\n" +
+               "WWW.TPRFN.NET";
+
+    document.getElementById('outputPre').textContent = body;
+  }
+
+  function copyASCII() {
+    var txt = document.getElementById('outputPre').textContent;
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(txt).then(function() {
+        alert("Report copied to clipboard!");
+      }).catch(function() {
+        fallbackCopy();
+      });
+    } else {
+      fallbackCopy();
+    }
+  }
+
+  function fallbackCopy() {
+    var pre = document.getElementById('outputPre');
+    var range = document.createRange();
+    range.selectNode(pre);
+    window.getSelection().removeAllRanges();
+    window.getSelection().addRange(range);
+    document.execCommand('copy');
+    alert("Copied to clipboard!");
+  }
+
+  function clearForm() {
+    if(confirm("CLEAR ALL FIELDS?")) {
+      document.getElementById('skywarnForm').reset();
+      document.getElementById('outputPre').textContent = 'Fill in the fields above and click "Generate Packet ASCII"...';
+    }
+  }
+
+  window.addEventListener('DOMContentLoaded', function() {
+    document.getElementById('btnDateNow').addEventListener('click', function() { setCurrentTime('time'); });
+    document.getElementById('btnChangeNow').addEventListener('click', function() { setCurrentTime('change-time'); });
+    document.getElementById('btnGen').addEventListener('click', generateReport);
+    document.getElementById('btnCopy').addEventListener('click', copyASCII);
+    document.getElementById('btnClear').addEventListener('click', clearForm);
+  });
+
+  // --- File Name Modal Window & HTML Exporter ---
+  function openSaveModal() {
+    var now = new Date();
+    var dStr = now.toISOString().slice(0, 10);
+    var defName = 'tprfn_skywarn_' + dStr + '.html';
+    var modal = document.getElementById('saveModalBackdrop');
+    var input = document.getElementById('saveModalFileName');
+    if (input) input.value = defName;
+    if (modal) modal.classList.add('active');
+    setTimeout(function() {
+      if (input) { input.focus(); input.select(); }
+    }, 50);
+  }
+
+  function closeSaveModal() {
+    var modal = document.getElementById('saveModalBackdrop');
+    if (modal) modal.classList.remove('active');
+  }
+
+  function executeSaveHTML() {
+    var input = document.getElementById('saveModalFileName');
+    var chosenName = input ? input.value.trim() : '';
+    if (!chosenName) return;
+    if (!chosenName.toLowerCase().endsWith('.html') && !chosenName.toLowerCase().endsWith('.htm')) {
+      chosenName += '.html';
+    }
+    closeSaveModal();
+
+    // Sync input values to DOM attributes so they save offline
+    document.querySelectorAll('input[type="text"]').forEach(function(el) { el.setAttribute('value', el.value); });
+    document.querySelectorAll('input[type="checkbox"], input[type="radio"]').forEach(function(el) {
+      if (el.checked) el.setAttribute('checked', 'checked');
+      else el.removeAttribute('checked');
+    });
+    document.querySelectorAll('textarea').forEach(function(el) { el.textContent = el.value; });
+    document.querySelectorAll('select').forEach(function(el) {
+      Array.from(el.options).forEach(function(opt) {
+        if (opt.value === el.value) opt.setAttribute('selected', 'selected');
+        else opt.removeAttribute('selected');
+      });
+    });
+    
+    var pre = document.getElementById('ascii-report') || document.getElementById('outputPre') || document.getElementById('preview') || document.getElementById('outputArea');
+    if (pre) pre.textContent = pre.textContent;
+
+    var clonedDoc = document.documentElement.cloneNode(true);
+    var modalInClone = clonedDoc.querySelector('#saveModalBackdrop');
+    if (modalInClone) modalInClone.classList.remove('active');
+
+    var htmlContent = '<!DOCTYPE html>\n' + clonedDoc.outerHTML;
+    var blob = new Blob([htmlContent], { type: 'text/html;charset=utf-8' });
+    var url = URL.createObjectURL(blob);
+    var a = document.createElement('a');
+    a.href = url;
+    a.download = chosenName;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  }
+
+  // Initialize event listeners safely after DOM loads
+  window.addEventListener('DOMContentLoaded', function() {
+    var cancelBtn = document.getElementById('saveModalCancelBtn');
+    var confirmBtn = document.getElementById('saveModalSaveBtn');
+    var modalInput = document.getElementById('saveModalFileName');
+    var modalBackdrop = document.getElementById('saveModalBackdrop');
+
+    if (cancelBtn) cancelBtn.addEventListener('click', closeSaveModal);
+    if (confirmBtn) confirmBtn.addEventListener('click', executeSaveHTML);
+    if (modalInput) {
+      modalInput.addEventListener('keydown', function(e) {
+        if (e.key === 'Enter') { e.preventDefault(); executeSaveHTML(); }
+        if (e.key === 'Escape') { e.preventDefault(); closeSaveModal(); }
+      });
+    }
+    if (modalBackdrop) {
+      modalBackdrop.addEventListener('click', function(e) {
+        if (e.target === modalBackdrop) closeSaveModal();
+      });
+    }
+
+    var btnSaveMain = document.getElementById('btnSaveHtml');
+    if (btnSaveMain) {
+      btnSaveMain.addEventListener('click', openSaveModal);
+    }
+  });
+</script>
+
+  <!-- Custom File Name Modal Window -->
+  <div id="saveModalBackdrop" class="save-modal-backdrop">
+    <div class="save-modal-window">
+      <h3>Save Form as HTML</h3>
+      <p>Enter a name for the saved offline HTML file:</p>
+      <input type="text" id="saveModalFileName" spellcheck="false">
+      <div class="save-modal-actions">
+        <button type="button" class="save-modal-btn save-modal-btn-cancel" id="saveModalCancelBtn">Cancel</button>
+        <button type="button" class="save-modal-btn save-modal-btn-confirm" id="saveModalSaveBtn">Save File</button>
+      </div>
+    </div>
+  </div>
+
+</body>
+</html>
